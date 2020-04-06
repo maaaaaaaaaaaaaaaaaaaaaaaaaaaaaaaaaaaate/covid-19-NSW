@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Covid-19 NSW</title>
+    <link rel="stylesheet" href="bulma.css">
+    <style>
+      .map {
+          width: 100%;
+          height: 100%;
+	  top: 0;
+	  left: 0;
+	  position: absolute
+      }
+    </style>
+  </head>
+  <body>
+    <section class="hero is-fullheight">
+      <!-- Hero head: will stick at the top -->
+      <div class="hero-head">
+	<header class="navbar">
+	  <div class="container">
+            <div class="navbar-brand">
+              <span class="navbar-burger burger" data-target="navbarMenuHeroC">
+		<span></span>
+		<span></span>
+		<span></span>
+              </span>
+            </div>
+            <div id="navbarMenuHeroC" class="navbar-menu">
+              <div class="navbar-end">
+		<span class="navbar-item">
+		  <a class="button is-light" id="sub-day">
+                    <span>Prior</span>
+		  </a>
+		</span>
+		<span class="navbar-item">
+		  <a class="button is-light is-inverted" id="date-text">
+                    <span></span>
+		  </a>
+		</span>
+		<span class="navbar-item">
+		  <a class="button is-light" id="add-day">
+                    <span>Next</span>
+		  </a>
+		</span>
+              </div>
+            </div>
+	  </div>
+	</header>
+      </div>
+
+      <div class="hero-body">
+	<div id="map" class="map"></div>
+      </div>
+
+      <!-- Hero footer: will stick at the bottom -->
+      <div class="hero-foot">
+	<nav class="tabs is-boxed is-fullwidth">
+	  <div class="container">
+            <ul>
+              <li><a>Contact</a></li>
+              <li><a>Click date to view timeline.</a></li>
+              <li><a>Source</a></li>
+            </ul>
+	  </div>
+	</nav>
+      </div>
+    </section>
+
+    <script src="index.js"></script>
+  </body>
+</html>

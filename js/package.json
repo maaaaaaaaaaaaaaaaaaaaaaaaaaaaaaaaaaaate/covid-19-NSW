@@ -1,0 +1,20 @@
+{
+   "name": "covid-nsw-ol-map",
+   "version": "1.0.0",
+   "description": "Map of covid-19 spread in NSW",
+   "main": "index.html",
+   "scripts": {
+      "start": "parcel index.html",
+      "build": "parcel build --experimental-scope-hoisting --public-url . index.html",
+      "test": "echo \"Error: no test specified\" && exit 1"
+   },
+   "author": "Thomas Paine",
+   "license": "ISC",
+   "dependencies": {
+      "bulma": "^0.8.1",
+      "ol": "^6.3.0"
+   },
+   "devDependencies": {
+      "parcel": "^1.12.4"
+   }
+}
