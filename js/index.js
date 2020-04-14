@@ -1,10 +1,25 @@
+import 'ol/ol.css';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import GeoJSON from 'ol/format/GeoJSON';
+import Cluster from 'ol/source/Cluster';
+import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer';
+import {OSM, TileWMS, Vector as VectorSource} from 'ol/source';
+import {Circle as CircleStyle, Fill, Stroke, Style, Text} from 'ol/style';
+import {createEmpty, getWidth, getHeight, extend} from 'ol/extent';
+
+var dateSelect = new Date();
+var intervalId = null;
+var maxFeatureCount;
+var vector = null;
+var currentResolution = null;
 
 // https://bulma.io/documentation/components/navbar/
 document.addEventListener('DOMContentLoaded', () => {
-    const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+    const $clickToggles = document.querySelectorAll('.click-toggle');
 
-    if ($navbarBurgers.length > 0) {
-	$navbarBurgers.forEach( el => {
+    if ($clickToggles.length > 0) {
+	$clickToggles.forEach( el => {
 	    el.addEventListener('click', () => {
 		const target = el.dataset.target;
 		const $target = document.getElementById(target);
@@ -14,20 +29,21 @@ document.addEventListener('DOMContentLoaded', () => {
 	    });
 	});
     }
+
+    document.getElementById('add-day').addEventListener('click', addDay);
+    document.getElementById('sub-day').addEventListener('click', subDay);
+    document.getElementById('date-text').addEventListener('click', playTimeline);
+    updateStatusText();
 });
 
-var dateSelect = new Date();
-
-function addDay() {
-    dateSelect.setDate(dateSelect.getDate() + 1);
+function addToDay(val) {
+    dateSelect.setDate(dateSelect.getDate() + val);
     updateStatusText();
-    vector.changed();
+    currentResolution = null;
+    vector.getSource().refresh();
 }
-function subDay() {
-    dateSelect.setDate(dateSelect.getDate() - 1);
-    updateStatusText();
-    vector.changed();
-}
+function addDay() { addToDay(1) };
+function subDay() { addToDay(-1) };
 
 // https://stackoverflow.com/questions/23593052/format-javascript-date-as-yyyy-mm-dd
 function formatDate(date) {
@@ -48,12 +64,10 @@ function updateStatusText() {
     document.getElementById('date-text').textContent = formatDate(dateSelect);
 }
 
-var intervalid = null;
-
 function playTimeline() {
-    if(intervalid !== null) {
-	window.clearInterval(intervalid);
-	intervalid = null;
+    if(intervalId !== null) {
+	window.clearInterval(intervalId);
+	intervalId = null;
 	return;
     }
     var dateLimit = new Date();
@@ -61,31 +75,15 @@ function playTimeline() {
 
     if(dateSelect >= dateLimit) dateSelect = new Date("2020-01-20");
 
-    intervalid = window.setInterval(function () {
+    intervalId = window.setInterval(function () {
 	addDay();
 	if(dateSelect > dateLimit) {
-	    window.clearInterval(intervalid);
-	    intervalid = null;
+	    window.clearInterval(intervalId);
+	    intervalId = null;
 	}
     }, 500);
 }
 
-document.getElementById('add-day').addEventListener('click', addDay);
-document.getElementById('sub-day').addEventListener('click', subDay);
-document.getElementById('date-text').addEventListener('click', playTimeline);
-updateStatusText();
-
-
-var textFill = new Fill({
-    color: '#fff'
-});
-var textStroke = new Stroke({
-    color: 'rgba(0, 0, 0, 0.6)',
-    width: 3
-});
-
-var maxFeatureCount;
-var vector = null;
 var calculateClusterInfo = function(resolution) {
     maxFeatureCount = 0;
     var features = vector.getSource().getFeatures();
@@ -105,7 +103,6 @@ var calculateClusterInfo = function(resolution) {
     }
 };
 
-var currentResolution;
 function styleFunction(feature, resolution) {
     if (resolution != currentResolution) {
 	calculateClusterInfo(resolution);
@@ -113,27 +110,25 @@ function styleFunction(feature, resolution) {
     }
     var style;
     var size = feature.get('features').length;
-    feature.get('features').forEach(function (featureL1) {
-	if(new Date(featureL1.get('notification_date')) > dateSelect) {
-	    size--;
-	}
-    });
-    if(size > 0) {
-	style = new Style({
-	    image: new CircleStyle({
-		radius: feature.get('radius'),
-		fill: new Fill({
-		    color: [73, 153, 255, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
-		})
+
+    return new Style({
+	image: new CircleStyle({
+            radius: Math.max(Math.min(30, 5*Math.log(size)), 10),
+            fill: new Fill({
+		color: [255, 13, 33, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
+            })
+	}),
+	text: new Text({
+            text: size.toString(),
+            fill: new Fill({
+		color: '#fff'
 	    }),
-	    text: new Text({
-		text: size.toString(),
-		fill: textFill,
-		stroke: textStroke
+            stroke: new Stroke({
+		color: 'rgba(0, 0, 0, 0.6)',
+		width: 3
 	    })
-	});
-    }
-    return style;
+	})
+    });
 }
 
 var vector = new VectorLayer({
@@ -142,6 +137,13 @@ var vector = new VectorLayer({
 	    format: new GeoJSON(),
 	    url: '/geo.json'
 	}),
+	geometryFunction: function(feature) {
+	    if(new Date(feature.get('notification_date')) > dateSelect) {
+		return null;
+	    } else {
+		return feature.getGeometry();
+	    }
+	},
 	distance: 30
     }),
     style: styleFunction
@@ -151,6 +153,15 @@ var map = new Map({
     layers: [
 	new TileLayer({
 	    source: new OSM()
+	}),
+	new TileLayer({
+//	    extent: [-13884991, 2870341, -7455066, 6338219],
+	    source: new TileWMS({
+		url: 'http://localhost:8080/geoserver/cite/wms',
+		params: {'LAYERS': 'POA_2016_AUST', 'STYLES': 'red'},//, 'VERSION': '1.1.0', 'request': 'GetMap', 'srs': 'EPSG-4283'},
+		serverType: 'geoserver',
+		// Countries have transparency, so do not fade tiles:
+	    })
 	}),
 	vector
     ],

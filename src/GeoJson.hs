@@ -15,16 +15,22 @@ import qualified Data.Sequence as S
 import LatLonPostcode (fetchPostcodeLatLon)
 
 nswHealthUrl :: String
-nswHealthUrl = "https://data.nsw.gov.au/data/dataset/aefcde60-3b0c-4bc0-9af1-6fe652944ec2/resource/21304414-1ff1-4243-a5d2-f52778048b29/download/covid-19-cases-by-notification-date-and-postcode-local-health-district-and-local-government-area.csv"
+nswHealthUrl = "https://data.nsw.gov.au/data/dataset/97ea2424-abaf-4f3e-a9f2-b5c883f42b6a/resource/2776dbb8-f807-4fb2-b1ed-184a6fc2c8aa/download/covid-19-cases-by-notification-date-location-and-likely-source-of-infection.csv"
 
 data CsvRow = CsvRow
   {
     postcode :: String,
-    notification_date :: String
+    notification_date :: String,
+    likely_source_of_infection :: String
   } deriving (Show, Generic)
 instance FromNamedRecord CsvRow
 instance ToNamedRecord CsvRow
 instance ToJSON CsvRow
+
+testGetLoc = do
+  response <- get nswHealthUrl
+  postcodeLatLon <- fetchPostcodeLatLon
+  return $ response ^. responseBody ^.. namedCsv . rows . _NamedRecord @CsvRow
 
 geoJsonResponse = do
   response <- get nswHealthUrl

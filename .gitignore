@@ -2,3 +2,4 @@ dist
 result
 node_modules
 .cache
+update.sh
