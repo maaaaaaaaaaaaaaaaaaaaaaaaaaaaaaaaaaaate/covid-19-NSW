@@ -1,47 +1,59 @@
-{-# LANGUAGE TypeApplications, DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
 
 module GeoJson where
 
-import Network.Wreq
-import Data.Csv
-import Data.Csv.Lens
 import Data.Aeson
-import Control.Lens
+import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Geospatial
-import GHC.Generics (Generic)
-import qualified Data.Map as M
+import GHC.Generics
 import qualified Data.Sequence as S
+import qualified Data.Map as M
+import Data.LinearRing
+import Data.Validation
 
-import LatLonPostcode (fetchPostcodeLatLon)
+import InfectionSource (fetchInfectionSource)
 
-nswHealthUrl :: String
-nswHealthUrl = "https://data.nsw.gov.au/data/dataset/97ea2424-abaf-4f3e-a9f2-b5c883f42b6a/resource/2776dbb8-f807-4fb2-b1ed-184a6fc2c8aa/download/covid-19-cases-by-notification-date-location-and-likely-source-of-infection.csv"
+encodeGeoJson :: IO (BS.ByteString)
+encodeGeoJson = do
+  postcodeLonLat <- fetchPostcodeGeo
+  return $ case postcodeLonLat of
+             Nothing -> encode ("" :: String)
+             Just v -> encode v
 
-data CsvRow = CsvRow
-  {
-    postcode :: String,
-    notification_date :: String,
-    likely_source_of_infection :: String
-  } deriving (Show, Generic)
-instance FromNamedRecord CsvRow
-instance ToNamedRecord CsvRow
-instance ToJSON CsvRow
+data Properties = Properties {
+  postcode' :: String,
+  area' :: Double
+  } deriving (Show)
+instance FromJSON Properties where
+    parseJSON = withObject "Properties" $ \v -> Properties
+        <$> v .: "POA_CODE16"
+        <*> v .: "AREASQKM16"
 
-testGetLoc = do
-  response <- get nswHealthUrl
-  postcodeLatLon <- fetchPostcodeLatLon
-  return $ response ^. responseBody ^.. namedCsv . rows . _NamedRecord @CsvRow
+data NewProps = NewProps {
+  postcode :: String,
+  area :: Double,
+  infections :: Infections
+  } deriving (Generic)
+instance ToJSON NewProps where
 
-geoJsonResponse = do
-  response <- get nswHealthUrl
-  postcodeLatLon <- fetchPostcodeLatLon
-  let csvRows = response ^. responseBody ^.. namedCsv . rows . _NamedRecord @CsvRow
-      result' = GeoFeatureCollection Nothing . S.fromList . map (makeFeature postcodeLatLon) $ csvRows
-    in return $ Data.Aeson.encode result'
+type Infections = M.Map String (M.Map String Int)
 
-makeFeature pcm row = case M.lookup (postcode row) pcm of
-  Just (lat, lon) -> mkGeoFeature lat lon row
-  Nothing -> mkGeoFeature (-70) 150 row
+fetchPostcodeGeo = do
+  theMap <- fetchInfectionSource
+  decodeFileStrict "postcode_multipoint.json" >>= return . fmap (
+    \(GeoFeatureCollection box geo) -> GeoFeatureCollection box (fmap (geoFeature theMap) . S.filter (inMap theMap) $ geo)
+    )
 
-mkGeoFeature lat lon row = GeoFeature Nothing
-  (Point . GeoPoint . stripCRSFromPosition $ LonLat lon lat) row Nothing
+inMap :: Eq a => M.Map String a -> GeoFeature Properties -> Bool
+inMap theMap (GeoFeature _ _ props _) = M.lookup (postcode' props) theMap /= Nothing
+
+geoFeature :: M.Map String Infections -> GeoFeature Properties -> GeoFeature NewProps
+geoFeature theMap (GeoFeature bb geo props fid) = GeoFeature bb newGeo newProps fid
+  where newProps = case M.lookup (postcode' props) theMap of
+          Nothing -> NewProps (postcode' props) (area' props) M.empty
+          Just props' -> NewProps (postcode' props) (area' props) props'
+        newGeo = let MultiPolygon (GeoMultiPolygon seqs) = geo
+                 in Point (GeoPoint (
+                                     (\s -> s `S.index` 0) . toSeq $
+                                     seqs `S.index` 0 `S.index` 0
+                                     ))

@@ -3,3 +3,4 @@ result
 node_modules
 .cache
 update.sh
+postcode_multipoint.json
