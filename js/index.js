@@ -13,93 +13,29 @@ var intervalId = null;
 var maxFeatureCount;
 var vector = null;
 var currentResolution = null;
-
-// https://bulma.io/documentation/components/navbar/
-document.addEventListener('DOMContentLoaded', () => {
-    const $clickToggles = document.querySelectorAll('.click-toggle');
-
-    if ($clickToggles.length > 0) {
-	$clickToggles.forEach( el => {
-	    el.addEventListener('click', () => {
-		const target = el.dataset.target;
-		const $target = document.getElementById(target);
-
-		el.classList.toggle('is-active');
-		$target.classList.toggle('is-active');
-	    });
-	});
-    }
-
-    document.getElementById('add-day').addEventListener('click', addDay);
-    document.getElementById('sub-day').addEventListener('click', subDay);
-    document.getElementById('date-text').addEventListener('click', playTimeline);
-    updateStatusText();
-});
-
-function addToDay(val) {
-    dateSelect.setDate(dateSelect.getDate() + val);
-    updateStatusText();
-    currentResolution = null;
-    vector.getSource().refresh();
-}
-function addDay() { addToDay(1) };
-function subDay() { addToDay(-1) };
-
-// https://stackoverflow.com/questions/23593052/format-javascript-date-as-yyyy-mm-dd
-function formatDate(date) {
-    var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
-
-    if (month.length < 2)
-        month = '0' + month;
-    if (day.length < 2)
-        day = '0' + day;
-
-    return [year, month, day].join('-');
-}
-
-function updateStatusText() {
-    document.getElementById('date-text').textContent = formatDate(dateSelect);
-}
-
-function playTimeline() {
-    if(intervalId !== null) {
-	window.clearInterval(intervalId);
-	intervalId = null;
-	return;
-    }
-    var dateLimit = new Date();
-    dateLimit.setDate(dateLimit.getDate() - 1);
-
-    if(dateSelect >= dateLimit) dateSelect = new Date("2020-01-20");
-
-    intervalId = window.setInterval(function () {
-	addDay();
-	if(dateSelect > dateLimit) {
-	    window.clearInterval(intervalId);
-	    intervalId = null;
-	}
-    }, 500);
-}
+var sourceFilter = null;
 
 var calculateClusterInfo = function(resolution) {
     maxFeatureCount = 0;
     var features = vector.getSource().getFeatures();
-    var feature, radius;
+    var feature, radius, size;
     for (var i = features.length - 1; i >= 0; --i) {
 	feature = features[i];
+	size = 0;
 	var originalFeatures = feature.get('features');
 	var extent = createEmpty();
 	var j = (void 0), jj = (void 0);
 	for (j = 0, jj = originalFeatures.length; j < jj; ++j) {
 	    extend(extent, originalFeatures[j].getGeometry().getExtent());
+	    var postcode = originalFeatures[j].get('postcode');
+	    size += sourceFilter[postcode];
 	}
 	maxFeatureCount = Math.max(maxFeatureCount, jj);
-	radius = 0.25 * (getWidth(extent) + getHeight(extent)) /
-            resolution;
-	feature.set('radius', radius);
+	radius = 10; //0.25 * (getWidth(extent) + getHeight(extent)) /
+            //resolution;
+
+	feature.set('size', size);
+	feature.set('radius', Math.max(10, radius/2));
     }
 };
 
@@ -109,17 +45,17 @@ function styleFunction(feature, resolution) {
 	currentResolution = resolution;
     }
     var style;
+    //var size = feature.get('size');
     var size = feature.get('features').length;
-
     return new Style({
 	image: new CircleStyle({
-            radius: Math.max(Math.min(30, 5*Math.log(size)), 10),
+            radius: feature.get('radius'),
             fill: new Fill({
 		color: [255, 13, 33, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
             })
 	}),
 	text: new Text({
-            text: size.toString(),
+            text: feature.get('size') + '',
             fill: new Fill({
 		color: '#fff'
 	    }),
@@ -138,7 +74,7 @@ var vector = new VectorLayer({
 	    url: '/geo.json'
 	}),
 	geometryFunction: function(feature) {
-	    if(new Date(feature.get('notification_date')) > dateSelect) {
+	    if(sourceFilter[feature.get('postcode')] == 0) {
 		return null;
 	    } else {
 		return feature.getGeometry();
@@ -154,21 +90,32 @@ var map = new Map({
 	new TileLayer({
 	    source: new OSM()
 	}),
-	new TileLayer({
-//	    extent: [-13884991, 2870341, -7455066, 6338219],
-	    source: new TileWMS({
-		url: 'http://localhost:8080/geoserver/cite/wms',
-		params: {'LAYERS': 'POA_2016_AUST', 'STYLES': 'red'},//, 'VERSION': '1.1.0', 'request': 'GetMap', 'srs': 'EPSG-4283'},
-		serverType: 'geoserver',
-		// Countries have transparency, so do not fade tiles:
-	    })
-	}),
 	vector
     ],
     target: 'map',
     view: new View({
 	projection: 'EPSG:4326',
-	center: [150.916, -31.08],
+	center: [150, -35],
 	zoom: 5
     })
 });
+
+
+window.onload = function () {
+// Create an observer instance linked to the callback function
+    const observer = new MutationObserver(function(mutationsList, observer) {
+	for(let mutation of mutationsList) {
+	    if (mutation.type === 'attributes') {
+		sourceFilter = JSON.parse(mutation.target.getAttribute('data-json'));
+		currentResolution = null;
+		vector.changed();
+            }
+	}
+    });
+
+    // Start observing the target node for configured mutations
+    observer.observe(document.getElementById('filtered_json'), {attributes: true});
+
+    // Later, you can stop observing
+    //observer.disconnect();
+};

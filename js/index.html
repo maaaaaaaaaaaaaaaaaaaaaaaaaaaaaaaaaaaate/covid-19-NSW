@@ -5,88 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Covid-19 NSW</title>
     <link rel="stylesheet" href="bulma.css">
+    <script src="elm.js"></script>
     <style>
+      #control-box {
+	  z-index: 9001;
+      }
       .map {
           width: 100%;
           height: 100%;
 	  top: 0;
 	  left: 0;
-	  position: absolute
+	  position: fixed;
       }
     </style>
   </head>
   <body>
-    <section class="hero is-fullheight">
-      <!-- Hero head: will stick at the top -->
-      <div class="hero-head">
-	<header class="navbar">
-	  <div class="container">
-            <div class="navbar-brand">
-              <span class="navbar-burger burger click-toggle" data-target="navbarMenuHeroC">
-		<span></span>
-		<span></span>
-		<span></span>
-              </span>
-            </div>
-            <div id="navbarMenuHeroC" class="navbar-menu">
-              <div class="navbar-end">
-		<span class="navbar-item">
-		  <a class="button is-light" id="sub-day">
-                    <span>Prior</span>
-		  </a>
-		</span>
-		<span class="navbar-item">
-		  <a class="button is-light is-inverted" id="date-text">
-                    <span></span>
-		  </a>
-		</span>
-		<span class="navbar-item">
-		  <a class="button is-light" id="add-day">
-                    <span>Next</span>
-		  </a>
-		</span>
-              </div>
-            </div>
-	  </div>
-	</header>
-      </div>
-
-      <div class="hero-body">
-	<div id="map" class="map"></div>
-      </div>
-
-      <!-- Hero footer: will stick at the bottom -->
-      <div class="hero-foot">
-	<nav class="tabs is-boxed is-fullwidth">
-	  <div class="container">
-            <ul>
-              <li><a class="click-toggle" data-target="about-modal">About</a></li>
-              <li><a href="https://github.com/tromar-8/covid-19-NSW">Source</a></li>
-            </ul>
-	  </div>
-	</nav>
+    <section class="section">
+      <div class="columns is-mobile">
+	<div class="column">
+	  <div id="map" class="map"> </div>
+	</div>
+	<div id="control-box" class="column is-one-quarter-desktop is-half-mobile">
+	  <div id="elm-controls"></div>
+	</div>
+	<script>
+	  var app = Elm.Main.init({
+	      node: document.getElementById('elm-controls')
+	  });
+	</script>
       </div>
     </section>
-    <div class="modal" id="about-modal">
-      <div class="modal-background click-toggle" data-target="about-modal"></div>
-      <div class="modal-card">
-	<header class="modal-card-head">
-	  <p class="modal-card-title">Covid-19 NSW Map</p>
-	  <button class="delete click-toggle" aria-label="close" data-target="about-modal"></button>
-	</header>
-	<section class="modal-card-body">
-	  <p>This map shows the postcode locations of positive Covid-19 tests in NSW.</p>
-	  <p>Click the date field at the top right of the page to view a timeline of cases (these buttons are hidden inside a menu on mobile.)</p>
-	  <p>Red circles on the map represent an aggregate of postcodes with the number of cases detailed inside the circle. At maximum zoom one red circle represents a single postcode.</p>
-	  <p>Cases located in Antarctica reflect no postcode in the underlying data.</p>
-	  <p>Data was sourced from NSW open data portal <a href="https://data.nsw.gov.au/data/dataset/covid-19-cases-by-location/resource/21304414-1ff1-4243-a5d2-f52778048b29">here</a> and contains the following disclaimer: "The data is for confirmed COVID-19 cases only based on location of usual residence, not necessarily where the virus was contracted. The case definition of a confirmed case is a person who tests positive to a validated specific SARS-CoV-2 nucleic acid test or has the virus identified by electron microscopy or viral culture, at a reference laboratory.
-
-	    The underlying dataset was assessed to measure the risk of identifying an individual and the level of sensitivity of the information gained if it was known that an individual was in the dataset. The dataset was then treated to mitigate these risks, including suppressing and aggregating data."</p>
-	  <p>Postcode location data was sourced <a href="https://www.corra.com.au/australian-postcode-location-data/">here.</a> In cases where multiple localities share a postcode a loosely averaged location represents the underlying postcode.</p>
-	  <p>Feedback and questions can be sent via electronic mail to the following address: <a href="mailto:thomas@gnarly.dog">thomas@gnarly.dog</a></p>
-	</section>
-      </div>
-    </div>
     <script src="index.js"></script>
   </body>
 </html>
