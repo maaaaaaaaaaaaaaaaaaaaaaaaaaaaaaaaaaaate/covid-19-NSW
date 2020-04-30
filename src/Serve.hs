@@ -9,9 +9,11 @@ import Network.HTTP.Types
 import Network.Wai.Handler.Warp (run)
 import Control.Monad.IO.Class
 
+import qualified Data.ByteString.Lazy.Char8 as BS
+
 import Persist (getGeoJson)
 
-startServer = run 3210 app
+startServer = getGeoJson >>= BS.writeFile "geo.json"
 
 app request response = liftIO getGeoJson >>=
   response . responseLBS status200

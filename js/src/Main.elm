@@ -2,10 +2,10 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (Html, text, div, input, label, button, option, select, p, strong)
-import Html.Attributes exposing (class, type_, placeholder, value, checked, id, attribute)
+import Html.Attributes exposing (class, type_, placeholder, value, checked, id, attribute, style)
 import Html.Events exposing (onClick, onInput, onCheck)
 import Time exposing (Posix, posixToMillis, millisToPosix)
-import Json.Decode exposing (Decoder, field, string, list, at, int, dict, maybe, map)
+import Json.Decode exposing (Decoder, field, string, list, at, int, dict, maybe)
 import Json.Encode exposing (encode, object)
 import Http exposing (Error)
 import Dict exposing (Dict)
@@ -25,6 +25,7 @@ type Msg = IncDate Int
          | CheckPostcode String
          | CheckSources String Bool
          | UpdateDate String
+         | ToggleControls
 
 type alias Model =
     { dates:
@@ -39,6 +40,7 @@ type alias Model =
     , postcode : String
     , dateVal : String
     , isPlaying : Bool
+    , hideControls : Bool
     }
 
 init : () -> (Model, Cmd Msg)
@@ -46,7 +48,7 @@ init _ =
   ( Model { date = Time.millisToPosix 0
           , minDate = Time.millisToPosix 0
           , maxDate = Time.millisToPosix 0}
-        Nothing Dict.empty Dict.empty [] "" "" False
+        Nothing Dict.empty Dict.empty [] "" "" False False
   , Cmd.batch [ Http.get
                    { url = "/geo.json"
                    , expect = Http.expectJson JsonResponse geoDecoder}
@@ -114,6 +116,8 @@ update msg model =
         CheckSources name bool -> ({model | sources = Dict.insert name bool model.sources} |> refilter, Cmd.none)
         UpdateDate val -> ( { model | numDays = String.toInt val} |> refilter
                           , Cmd.none)
+        ToggleControls -> ({ model | hideControls = not model.hideControls}, Cmd.none)
+
 refilter : Model -> Model
 refilter model =
     let newFilter = List.foldl checkProps Dict.empty model.unfiltered
@@ -121,9 +125,9 @@ refilter model =
         checkDates date infs result2 =
             case toTime date |> Result.toMaybe of
                 Nothing -> result2
-                Just posix -> if posixToMillis posix >= (case model.numDays of
-                                                             Nothing -> posixToMillis model.dates.minDate
-                                                             Just num -> posixToMillis model.dates.date  - num * 86400000)
+                Just posix -> if posixToMillis posix > (case model.numDays of
+                                                            Nothing -> posixToMillis model.dates.minDate
+                                                            Just num -> posixToMillis model.dates.date  - num * 86400000)
                               && posixToMillis posix <= posixToMillis model.dates.date
                               then Dict.foldl checkLast result2 infs
                               else result2
@@ -146,33 +150,41 @@ jsonEncode val = encode 0 <| object <| Dict.toList <| Dict.map (\_ -> Json.Encod
 view : Model -> Html Msg
 view model =
     let postcodeCheck = List.any (\p -> model.postcode == p.postcode) model.unfiltered
-    in div [class "box", id "filtered_json", attribute "data-json" (jsonEncode model.filtered)]
-             [ div [class "field has-addons"]
-                   [ div [class "control"] [button [class "button is-dark", onClick (IncDate -1)] [text "Prev"]]
-                   , div [class "control"] [input [ case toTime model.dateVal |> Result.toMaybe of
-                                                    Nothing -> class "input is-danger"
-                                                    Just _ -> class "input"
-                                                  , type_ "text"
-                                                  , onInput CheckDate
-                                                  , value model.dateVal] []]
-                   , div [class "control"] [button [class "button is-dark", onClick (IncDate 1)] [text "Next"]]
-                   ]
-             , formField "Timeline" [if model.isPlaying
-                                     then playButton "Pause" "button is-warning"
-                                     else playButton "Play" "button is-success"]
-             , formField "Postcode" [input [ if model.postcode == "" then class "input"
-                                             else if postcodeCheck
-                                                  then class "input is-success"
-                                                  else class "input is-danger"
-                                           , type_ "text"
-                                           , onInput CheckPostcode
-                                           , placeholder "Postcode"] []]
-             , if postcodeCheck
-               then postcodeDetails model.postcode model.unfiltered
-               else div [] []
-             , formField "Cases in last n days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
-             , formField "Filter" (List.map formCheckbox <| Dict.toList model.sources)
-             ]
+    in div []
+        [ button (if model.hideControls
+                  then [class "button", onClick ToggleControls]
+                  else [class "button", onClick ToggleControls, style "display" "none"]) [text "Show Controls"]
+        , div (if model.hideControls
+               then [class "box", id "filtered_json", attribute "data-json" (jsonEncode model.filtered), style "display" "none"]
+               else [class "box", id "filtered_json", attribute "data-json" (jsonEncode model.filtered)])
+            [ formField "Controls" [button [class "button", onClick ToggleControls] [text "Hide Controls"]]
+            , div [class "field has-addons"]
+                [ div [class "control"] [button [class "button is-dark", onClick (IncDate -1)] [text "Prev"]]
+                , div [class "control"] [input [ case toTime model.dateVal |> Result.toMaybe of
+                                                     Nothing -> class "input is-danger"
+                                                     Just _ -> class "input"
+                                               , type_ "text"
+                                               , onInput CheckDate
+                                               , value model.dateVal] []]
+                , div [class "control"] [button [class "button is-dark", onClick (IncDate 1)] [text "Next"]]
+                ]
+            , formField "Timeline" [if model.isPlaying
+                                    then playButton "Pause" "button is-warning"
+                                    else playButton "Start" "button is-success"]
+            , formField "Postcode" [input [ if model.postcode == "" then class "input"
+                                            else if postcodeCheck
+                                                 then class "input is-success"
+                                                 else class "input is-danger"
+                                          , type_ "text"
+                                          , onInput CheckPostcode
+                                          , placeholder "Postcode"] []]
+            , if postcodeCheck
+              then postcodeDetails model.postcode model.unfiltered
+              else div [] []
+            , formField "Cases in last n days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
+            , formField "Filter" (List.map formCheckbox <| Dict.toList model.sources)
+            ]
+        ]
 
 showFiltered postcode num = p [] [postcode ++ ": " |> text, strong [] [String.fromInt num |> text]]
 
@@ -198,7 +210,7 @@ minDateFold data =
                         Nothing -> r)
         "9999-99-99" data
             |> \s -> case toTime s |> Result.toMaybe of
-                         Just posix -> posix
+                         Just posix -> millisToPosix <| posixToMillis posix - 86400000
                          Nothing -> millisToPosix 0
 
 maxDateFold data =

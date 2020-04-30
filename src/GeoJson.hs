@@ -17,7 +17,7 @@ encodeGeoJson :: IO (BS.ByteString)
 encodeGeoJson = do
   postcodeLonLat <- fetchPostcodeGeo
   return $ case postcodeLonLat of
-             Nothing -> encode ("" :: String)
+             Nothing -> encode ("0" :: String)
              Just v -> encode v
 
 data Properties = Properties {
@@ -26,8 +26,8 @@ data Properties = Properties {
   } deriving (Show)
 instance FromJSON Properties where
     parseJSON = withObject "Properties" $ \v -> Properties
-        <$> v .: "POA_CODE16"
-        <*> v .: "AREASQKM16"
+        <$> v .: "postcode"
+        <*> v .: "area"
 
 data NewProps = NewProps {
   postcode :: String,
@@ -38,9 +38,10 @@ instance ToJSON NewProps where
 
 type Infections = M.Map String (M.Map String Int)
 
+fetchPostcodeGeo :: IO (Maybe (GeoFeatureCollection NewProps))
 fetchPostcodeGeo = do
   theMap <- fetchInfectionSource
-  decodeFileStrict "postcode_multipoint.json" >>= return . fmap (
+  decodeFileStrict "postcode_point.json" >>= return . fmap (
     \(GeoFeatureCollection box geo) -> GeoFeatureCollection box (fmap (geoFeature theMap) . S.filter (inMap theMap) $ geo)
     )
 
@@ -48,12 +49,7 @@ inMap :: Eq a => M.Map String a -> GeoFeature Properties -> Bool
 inMap theMap (GeoFeature _ _ props _) = M.lookup (postcode' props) theMap /= Nothing
 
 geoFeature :: M.Map String Infections -> GeoFeature Properties -> GeoFeature NewProps
-geoFeature theMap (GeoFeature bb geo props fid) = GeoFeature bb newGeo newProps fid
+geoFeature theMap (GeoFeature bb geo props fid) = GeoFeature bb geo newProps fid
   where newProps = case M.lookup (postcode' props) theMap of
           Nothing -> NewProps (postcode' props) (area' props) M.empty
           Just props' -> NewProps (postcode' props) (area' props) props'
-        newGeo = let MultiPolygon (GeoMultiPolygon seqs) = geo
-                 in Point (GeoPoint (
-                                     (\s -> s `S.index` 0) . toSeq $
-                                     seqs `S.index` 0 `S.index` 0
-                                     ))

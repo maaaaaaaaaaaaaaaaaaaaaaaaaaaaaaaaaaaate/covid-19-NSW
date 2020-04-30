@@ -30,12 +30,9 @@ var calculateClusterInfo = function(resolution) {
 	    var postcode = originalFeatures[j].get('postcode');
 	    size += sourceFilter[postcode];
 	}
-	maxFeatureCount = Math.max(maxFeatureCount, jj);
-	radius = 10; //0.25 * (getWidth(extent) + getHeight(extent)) /
-            //resolution;
+	maxFeatureCount = Math.max(maxFeatureCount, size);
 
 	feature.set('size', size);
-	feature.set('radius', Math.max(10, radius/2));
     }
 };
 
@@ -45,17 +42,16 @@ function styleFunction(feature, resolution) {
 	currentResolution = resolution;
     }
     var style;
-    //var size = feature.get('size');
-    var size = feature.get('features').length;
+    var size = feature.get('size');
     return new Style({
 	image: new CircleStyle({
-            radius: feature.get('radius'),
+            radius: Math.min(20, 10*Math.exp(size/maxFeatureCount)),
             fill: new Fill({
-		color: [255, 13, 33, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
+		color: [255, 13, 33, Math.min(0.8, 0.4 + 0.6 * size / maxFeatureCount)]
             })
 	}),
 	text: new Text({
-            text: feature.get('size') + '',
+            text: size + '',
             fill: new Fill({
 		color: '#fff'
 	    }),
@@ -108,7 +104,7 @@ window.onload = function () {
 	    if (mutation.type === 'attributes') {
 		sourceFilter = JSON.parse(mutation.target.getAttribute('data-json'));
 		currentResolution = null;
-		vector.changed();
+		vector.getSource().refresh();
             }
 	}
     });
