@@ -14,6 +14,7 @@ var maxFeatureCount;
 var vector = null;
 var currentResolution = null;
 var sourceFilter = null;
+var selected = null;
 
 var calculateClusterInfo = function(resolution) {
     maxFeatureCount = 0;
@@ -27,11 +28,9 @@ var calculateClusterInfo = function(resolution) {
 	var j = (void 0), jj = (void 0);
 	for (j = 0, jj = originalFeatures.length; j < jj; ++j) {
 	    extend(extent, originalFeatures[j].getGeometry().getExtent());
-	    var postcode = originalFeatures[j].get('postcode');
-	    size += sourceFilter[postcode];
+	    size += sourceFilter[originalFeatures[j].get('postcode')];
 	}
 	maxFeatureCount = Math.max(maxFeatureCount, size);
-
 	feature.set('size', size);
     }
 };
@@ -67,7 +66,7 @@ var vector = new VectorLayer({
     source: new Cluster({
 	source: new VectorSource({
 	    format: new GeoJSON(),
-	    url: '/geo.json'
+	    url: '/geo.json?' + Date.now()
 	}),
 	geometryFunction: function(feature) {
 	    if(sourceFilter[feature.get('postcode')] == 0) {
@@ -96,7 +95,6 @@ var map = new Map({
     })
 });
 
-
 window.onload = function () {
 // Create an observer instance linked to the callback function
     const observer = new MutationObserver(function(mutationsList, observer) {
@@ -115,3 +113,18 @@ window.onload = function () {
     // Later, you can stop observing
     //observer.disconnect();
 };
+
+var app = Elm.Main.init({
+    node: document.getElementById('elm-controls')
+});
+
+map.on('pointermove', function(e) {
+    map.forEachFeatureAtPixel(e.pixel, function(f) {
+	var coordinate = e.coordinate;
+	var fs = f.get('features');
+	if(fs.length == 1 && fs[0].get('postcode') != selected) {
+	    selected = fs[0].get('postcode');
+	    app.ports.subPostcode.send(selected);
+	}
+  });
+});

@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeApplications, DeriveGeneric #-}
 
-module InfectionSource where
+module TestData where
 
 import Network.Wreq
 import Data.Csv
@@ -12,30 +12,38 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Data.Map as M
 
 nswHealthUrl :: String
-nswHealthUrl = "https://data.nsw.gov.au/data/dataset/97ea2424-abaf-4f3e-a9f2-b5c883f42b6a/resource/2776dbb8-f807-4fb2-b1ed-184a6fc2c8aa/download/covid-19-cases-by-notification-date-location-and-likely-source-of-infection.csv"
+nswHealthUrl = "https://data.nsw.gov.au/data/dataset/5424aa3b-550d-4637-ae50-7f458ce327f4/resource/227f6b65-025c-482c-9f22-a25cf1b8594f/download/covid-19-tests-by-date-and-location-and-result.csv"
 
 data CsvRow = CsvRow
   {
     postcode :: String,
-    notification_date :: String,
-    likely_source_of_infection :: String
+    result :: String
   } deriving (Show, Generic)
 instance FromNamedRecord CsvRow
 instance ToNamedRecord CsvRow
 instance ToJSON CsvRow
 
-fetchInfectionSource = do
+data TestResult = TestResult
+  { cases :: Int
+  , tests :: Int
+  } deriving (Show)
+
+tester =  fetchTestData >>= print
+
+fetchTestData = do
   response <- get nswHealthUrl
   let propertyMap = response ^. responseBody ^.. namedCsv . rows . _NamedRecord @CsvRow ^. to makeMap
     in return propertyMap
 
--- | List of CSV Rows to {postcode: {date: {infection_source: number_of_patients}}}
-makeMap :: [CsvRow] -> M.Map String (M.Map String (M.Map String Int))
+-- | List of CSV Rows to {postcode: {cases OR tests : number}}
+makeMap :: [CsvRow] -> M.Map String (M.Map String Int)
 makeMap = foldl (\acc -> \csv ->
-                    (M.unionWith . M.unionWith  . M.unionWith $ (+))
+                    (M.unionWith . M.unionWith $ (+))
                     (M.singleton (case postcode csv of
                                     "" -> "0"
                                     _ -> postcode csv)
-                      . M.singleton (notification_date csv) . M.singleton (likely_source_of_infection csv) $ 1)
+                    (case result csv of
+                       "Case - Confirmed" -> M.insert "cases" 1 $ M.singleton "tests" 1
+                       "Tested & excluded" -> M.insert "cases" 0 $ M.singleton "tests" 1))
                     acc
                 ) M.empty

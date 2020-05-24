@@ -1,4 +1,8 @@
-module Main exposing (main)
+port module Main exposing (main)
+
+-- Mapping Corona virus infections in NSW, Australia
+-- Control Panel for open layers map
+-- Thomas Paine, 2020
 
 import Browser
 import Html exposing (Html, text, div, input, label, button, option, select, p, strong)
@@ -10,6 +14,9 @@ import Json.Encode exposing (encode, object)
 import Http exposing (Error)
 import Dict exposing (Dict)
 import Iso8601 exposing (toTime, fromTime)
+
+-- Communicate postcode from open layers js
+port subPostcode : (String -> msg) -> Sub msg
 
 main = Browser.element
     { init = init
@@ -26,6 +33,7 @@ type Msg = IncDate Int
          | CheckSources String Bool
          | UpdateDate String
          | ToggleControls
+         | Hover String
 
 type alias Model =
     { dates:
@@ -55,24 +63,27 @@ init _ =
               ]
   )
 
+-- Single GeoJson row
 type alias Properties =
     { postcode : String
-    , infections : Dict String (Dict String Int)
+    , infections : Dict String (Dict String Int) -- date, infection type, infection count
+    , tests : Dict String Int
     }
 
-
-
 geoDecoder = field "features"
-             <| list (Json.Decode.map2 Properties
+             <| list (Json.Decode.map3 Properties
                           (field "properties"
                                <| field "postcode" string)
                           (field "properties"
-                               <| field "infections" <| dict <| dict <| int))
+                               <| field "infections" <| dict <| dict <| int)
+                          (field "properties"
+                               <| field "tests" <| dict <| int))
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     let dates = model.dates in
     case msg of
+        -- Plus or minus one day
         IncDate sign -> let newDate = incDay dates sign in
                         ({ model
                              | dates = { dates | date = newDate }
@@ -82,13 +93,19 @@ update msg model =
                                            else model.isPlaying }
                              |> refilter
                         , Cmd.none)
+        -- Toggle whether timeline is playing
         PlayTimeline -> (if not model.isPlaying && model.dates.date == model.dates.maxDate
                          then { model
                                   | isPlaying = not model.isPlaying,
-                                    dates = { dates | date = model.dates.minDate} }
+                                    dates = { dates | date = millisToPosix (posixToMillis model.dates.minDate +
+                                                  ((case model.numDays of
+                                                       Just v -> v
+                                                       Nothing -> 0)
+                                                  |> \x -> x * 86400000))} }
                              |> refilter
                          else { model | isPlaying = not model.isPlaying }
                         , Cmd.none)
+        -- Fetch GeoJson from file
         JsonResponse result ->
             case Result.toMaybe result of
                 Nothing -> (model, Cmd.none)
@@ -104,6 +121,7 @@ update msg model =
                             , dateVal = String.left 10 <| fromTime newMax }
                          |> refilter
                     , Cmd.none)
+        -- Check if date input matches "yyyy-mm-dd"
         CheckDate string -> case Result.toMaybe <| toTime string of
                                 Nothing -> ({model | dateVal = string}
                                            , Cmd.none)
@@ -112,12 +130,17 @@ update msg model =
                                                    , dateVal = string }
                                                    |> refilter
                                               , Cmd.none)
+        -- Store postcode input
         CheckPostcode postcode -> ({model | postcode = postcode }, Cmd.none)
+        -- Filter by infectuib source
         CheckSources name bool -> ({model | sources = Dict.insert name bool model.sources} |> refilter, Cmd.none)
+        --
         UpdateDate val -> ( { model | numDays = String.toInt val} |> refilter
                           , Cmd.none)
         ToggleControls -> ({ model | hideControls = not model.hideControls}, Cmd.none)
+        Hover postcode -> ({ model | postcode = postcode }, Cmd.none)
 
+--
 refilter : Model -> Model
 refilter model =
     let newFilter = List.foldl checkProps Dict.empty model.unfiltered
@@ -140,10 +163,12 @@ refilter model =
     in { model
            | filtered = newFilter }
 
+-- Watch postcode from port and increment date if timeline is playing
 subscriptions : Model -> Sub Msg
 subscriptions model = if model.isPlaying
-                      then always (IncDate 1) |> Time.every 500
-                      else Sub.none
+                      then Sub.batch [subPostcode Hover, always (IncDate 1) |> Time.every 500]
+                      else subPostcode Hover
+
 
 jsonEncode val = encode 0 <| object <| Dict.toList <| Dict.map (\_ -> Json.Encode.int) val
 
@@ -177,7 +202,8 @@ view model =
                                                  else class "input is-danger"
                                           , type_ "text"
                                           , onInput CheckPostcode
-                                          , placeholder "Postcode"] []]
+                                          , placeholder "Postcode"
+                                          , value model.postcode] []]
             , if postcodeCheck
               then postcodeDetails model.postcode model.unfiltered
               else div [] []
@@ -185,8 +211,6 @@ view model =
             , formField "Filter" (List.map formCheckbox <| Dict.toList model.sources)
             ]
         ]
-
-showFiltered postcode num = p [] [postcode ++ ": " |> text, strong [] [String.fromInt num |> text]]
 
 manyOptions dates =
     let numOpts = (posixToMillis dates.date - posixToMillis dates.minDate) // 86400000 + 1
@@ -228,9 +252,19 @@ showProp property = p [] [text property.postcode]
 postcodeDetails postcode properties =
     let datePrint date val = div [] <| strong [] [text date] :: (Dict.values <| Dict.map infPrint val)
         infPrint inf num = p [] [inf ++ ": " |> text, strong [] [String.fromInt num |> text]]
+        showTests tests = let total = Maybe.withDefault 0 (Dict.get "tests" tests)
+                              cases = Maybe.withDefault 0 (Dict.get "cases" tests)
+                          in div []
+                               [ p [] [strong [] [text "Tests: "], String.fromInt total |> text]
+                               , p [] [strong [] [text "Cases: "], String.fromInt cases |> text]
+                               , p []
+                                   [ strong [] [text "Cases/Tests: "]
+                                   , (String.slice 0 5 <| String.fromFloat
+                                         <| 100 * toFloat cases / toFloat total) ++ "%" |> text]
+                              ]
     in case List.head <| List.filter (\p -> postcode == p.postcode) properties of
         Nothing -> div [] []
-        Just prop -> div [] (Dict.values <| Dict.map datePrint prop.infections)
+        Just prop -> div [] [showTests prop.tests, div [] (List.reverse <| Dict.values <| Dict.map datePrint prop.infections)]
 
 playButton name classes = button [class classes, onClick PlayTimeline] [text name]
 
@@ -248,7 +282,7 @@ formCheckbox (description, checke) = div [class "field"]
 incDay dates sign = let maxM = posixToMillis dates.maxDate
                         minM = posixToMillis dates.minDate
                         newDayM = posixToMillis dates.date + sign * 86400000
-                    -- check bounds
+                    -- check bounds as posix
                     in if newDayM > maxM then millisToPosix maxM
                        else if newDayM < minM then millisToPosix minM
                             else millisToPosix newDayM

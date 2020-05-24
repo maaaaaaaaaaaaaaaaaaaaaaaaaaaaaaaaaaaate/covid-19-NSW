@@ -1857,9 +1857,9 @@ var _Platform_worker = F4(function(impl, flagDecoder, debugMetadata, args)
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.a4,
-		impl.bj,
-		impl.bg,
+		impl.a5,
+		impl.bk,
+		impl.bh,
 		function() { return function() {} }
 	);
 });
@@ -3928,11 +3928,11 @@ var _Browser_element = _Debugger_element || F4(function(impl, flagDecoder, debug
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.a4,
-		impl.bj,
-		impl.bg,
+		impl.a5,
+		impl.bk,
+		impl.bh,
 		function(sendToApp, initialModel) {
-			var view = impl.bl;
+			var view = impl.bm;
 			/**/
 			var domNode = args['node'];
 			//*/
@@ -3964,12 +3964,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.a4,
-		impl.bj,
-		impl.bg,
+		impl.a5,
+		impl.bk,
+		impl.bh,
 		function(sendToApp, initialModel) {
 			var divertHrefToApp = impl.Y && impl.Y(sendToApp)
-			var view = impl.bl;
+			var view = impl.bm;
 			var title = _VirtualDom_doc.title;
 			var bodyNode = _VirtualDom_doc.body;
 			var currNode = _VirtualDom_virtualize(bodyNode);
@@ -3977,12 +3977,12 @@ var _Browser_document = _Debugger_document || F4(function(impl, flagDecoder, deb
 			{
 				_VirtualDom_divertHrefToApp = divertHrefToApp;
 				var doc = view(model);
-				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.aX);
+				var nextNode = _VirtualDom_node('body')(_List_Nil)(doc.aY);
 				var patches = _VirtualDom_diff(currNode, nextNode);
 				bodyNode = _VirtualDom_applyPatches(bodyNode, currNode, patches, sendToApp);
 				currNode = nextNode;
 				_VirtualDom_divertHrefToApp = 0;
-				(title !== doc.bi) && (_VirtualDom_doc.title = title = doc.bi);
+				(title !== doc.bj) && (_VirtualDom_doc.title = title = doc.bj);
 			});
 		}
 	);
@@ -4038,8 +4038,8 @@ function _Browser_makeAnimator(model, draw)
 
 function _Browser_application(impl)
 {
-	var onUrlChange = impl.a8;
-	var onUrlRequest = impl.a9;
+	var onUrlChange = impl.a9;
+	var onUrlRequest = impl.ba;
 	var key = function() { key.a(onUrlChange(_Browser_getUrl())); };
 
 	return _Browser_document({
@@ -4069,13 +4069,13 @@ function _Browser_application(impl)
 				}
 			});
 		},
-		a4: function(flags)
+		a5: function(flags)
 		{
-			return A3(impl.a4, flags, _Browser_getUrl(), key);
+			return A3(impl.a5, flags, _Browser_getUrl(), key);
 		},
-		bl: impl.bl,
-		bj: impl.bj,
-		bg: impl.bg
+		bm: impl.bm,
+		bk: impl.bk,
+		bh: impl.bh
 	});
 }
 
@@ -4141,17 +4141,17 @@ var _Browser_decodeEvent = F2(function(decoder, event)
 function _Browser_visibilityInfo()
 {
 	return (typeof _VirtualDom_doc.hidden !== 'undefined')
-		? { a2: 'hidden', aY: 'visibilitychange' }
+		? { a3: 'hidden', aZ: 'visibilitychange' }
 		:
 	(typeof _VirtualDom_doc.mozHidden !== 'undefined')
-		? { a2: 'mozHidden', aY: 'mozvisibilitychange' }
+		? { a3: 'mozHidden', aZ: 'mozvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.msHidden !== 'undefined')
-		? { a2: 'msHidden', aY: 'msvisibilitychange' }
+		? { a3: 'msHidden', aZ: 'msvisibilitychange' }
 		:
 	(typeof _VirtualDom_doc.webkitHidden !== 'undefined')
-		? { a2: 'webkitHidden', aY: 'webkitvisibilitychange' }
-		: { a2: 'hidden', aY: 'visibilitychange' };
+		? { a3: 'webkitHidden', aZ: 'webkitvisibilitychange' }
+		: { a3: 'hidden', aZ: 'visibilitychange' };
 }
 
 
@@ -4233,10 +4233,10 @@ function _Browser_getViewport()
 {
 	return {
 		aI: _Browser_getScene(),
-		aQ: {
-			aS: _Browser_window.pageXOffset,
-			aT: _Browser_window.pageYOffset,
-			aR: _Browser_doc.documentElement.clientWidth,
+		aR: {
+			aT: _Browser_window.pageXOffset,
+			aU: _Browser_window.pageYOffset,
+			aS: _Browser_doc.documentElement.clientWidth,
 			al: _Browser_doc.documentElement.clientHeight
 		}
 	};
@@ -4247,7 +4247,7 @@ function _Browser_getScene()
 	var body = _Browser_doc.body;
 	var elem = _Browser_doc.documentElement;
 	return {
-		aR: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
+		aS: Math.max(body.scrollWidth, body.offsetWidth, elem.scrollWidth, elem.offsetWidth, elem.clientWidth),
 		al: Math.max(body.scrollHeight, body.offsetHeight, elem.scrollHeight, elem.offsetHeight, elem.clientHeight)
 	};
 }
@@ -4272,13 +4272,13 @@ function _Browser_getViewportOf(id)
 	{
 		return {
 			aI: {
-				aR: node.scrollWidth,
+				aS: node.scrollWidth,
 				al: node.scrollHeight
 			},
-			aQ: {
-				aS: node.scrollLeft,
-				aT: node.scrollTop,
-				aR: node.clientWidth,
+			aR: {
+				aT: node.scrollLeft,
+				aU: node.scrollTop,
+				aS: node.clientWidth,
 				al: node.clientHeight
 			}
 		};
@@ -4310,16 +4310,16 @@ function _Browser_getElement(id)
 		var y = _Browser_window.pageYOffset;
 		return {
 			aI: _Browser_getScene(),
-			aQ: {
-				aS: x,
-				aT: y,
-				aR: _Browser_doc.documentElement.clientWidth,
+			aR: {
+				aT: x,
+				aU: y,
+				aS: _Browser_doc.documentElement.clientWidth,
 				al: _Browser_doc.documentElement.clientHeight
 			},
-			a$: {
-				aS: x + rect.left,
-				aT: y + rect.top,
-				aR: rect.width,
+			a0: {
+				aT: x + rect.left,
+				aU: y + rect.top,
+				aS: rect.width,
 				al: rect.height
 			}
 		};
@@ -4365,25 +4365,25 @@ var _Http_toTask = F3(function(router, toTask, request)
 	return _Scheduler_binding(function(callback)
 	{
 		function done(response) {
-			callback(toTask(request.a0.a(response)));
+			callback(toTask(request.a1.a(response)));
 		}
 
 		var xhr = new XMLHttpRequest();
 		xhr.addEventListener('error', function() { done($elm$http$Http$NetworkError_); });
 		xhr.addEventListener('timeout', function() { done($elm$http$Http$Timeout_); });
-		xhr.addEventListener('load', function() { done(_Http_toResponse(request.a0.b, xhr)); });
-		$elm$core$Maybe$isJust(request.aO) && _Http_track(router, xhr, request.aO.a);
+		xhr.addEventListener('load', function() { done(_Http_toResponse(request.a1.b, xhr)); });
+		$elm$core$Maybe$isJust(request.aP) && _Http_track(router, xhr, request.aP.a);
 
 		try {
-			xhr.open(request.a6, request.bk, true);
+			xhr.open(request.a7, request.bl, true);
 		} catch (e) {
-			return done($elm$http$Http$BadUrl_(request.bk));
+			return done($elm$http$Http$BadUrl_(request.bl));
 		}
 
 		_Http_configureRequest(xhr, request);
 
-		request.aX.a && xhr.setRequestHeader('Content-Type', request.aX.a);
-		xhr.send(request.aX.b);
+		request.aY.a && xhr.setRequestHeader('Content-Type', request.aY.a);
+		xhr.send(request.aY.b);
 
 		return function() { xhr.c = true; xhr.abort(); };
 	});
@@ -4398,9 +4398,9 @@ function _Http_configureRequest(xhr, request)
 	{
 		xhr.setRequestHeader(headers.a.a, headers.a.b);
 	}
-	xhr.timeout = request.bh.a || 0;
-	xhr.responseType = request.a0.d;
-	xhr.withCredentials = request.aV;
+	xhr.timeout = request.bi.a || 0;
+	xhr.responseType = request.a1.d;
+	xhr.withCredentials = request.aW;
 }
 
 
@@ -4421,9 +4421,9 @@ function _Http_toResponse(toBody, xhr)
 function _Http_toMetadata(xhr)
 {
 	return {
-		bk: xhr.responseURL,
-		be: xhr.status,
-		bf: xhr.statusText,
+		bl: xhr.responseURL,
+		bf: xhr.status,
+		bg: xhr.statusText,
 		ak: _Http_parseHeaders(xhr.getAllResponseHeaders())
 	};
 }
@@ -4519,14 +4519,14 @@ function _Http_track(router, xhr, tracker)
 	xhr.upload.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2($elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, $elm$http$Http$Sending({
-			bd: event.loaded,
+			be: event.loaded,
 			aK: event.total
 		}))));
 	});
 	xhr.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2($elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, $elm$http$Http$Receiving({
-			bb: event.loaded,
+			bc: event.loaded,
 			aK: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
@@ -5531,7 +5531,7 @@ var $author$project$Main$JsonResponse = function (a) {
 };
 var $author$project$Main$Model = F9(
 	function (dates, numDays, sources, filtered, unfiltered, postcode, dateVal, isPlaying, hideControls) {
-		return {z: dateVal, j: dates, T: filtered, L: hideControls, o: isPlaying, V: numDays, s: postcode, D: sources, R: unfiltered};
+		return {z: dateVal, j: dates, T: filtered, L: hideControls, p: isPlaying, U: numDays, n: postcode, D: sources, R: unfiltered};
 	});
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$core$Dict$RBEmpty_elm_builtin = {$: -2};
@@ -6126,7 +6126,7 @@ var $elm$http$Http$resolve = F2(
 			case 3:
 				var metadata = response.a;
 				return $elm$core$Result$Err(
-					$elm$http$Http$BadStatus(metadata.be));
+					$elm$http$Http$BadStatus(metadata.bf));
 			default:
 				var body = response.b;
 				return A2(
@@ -6148,9 +6148,9 @@ var $elm$http$Http$expectJson = F2(
 						A2($elm$json$Json$Decode$decodeString, decoder, string));
 				}));
 	});
-var $author$project$Main$Properties = F2(
-	function (postcode, infections) {
-		return {G: infections, s: postcode};
+var $author$project$Main$Properties = F3(
+	function (postcode, infections, tests) {
+		return {G: infections, n: postcode, aO: tests};
 	});
 var $elm$core$Dict$fromList = function (assocs) {
 	return A3(
@@ -6174,13 +6174,14 @@ var $elm$json$Json$Decode$dict = function (decoder) {
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$list = _Json_decodeList;
+var $elm$json$Json$Decode$map3 = _Json_map3;
 var $elm$json$Json$Decode$string = _Json_decodeString;
 var $author$project$Main$geoDecoder = A2(
 	$elm$json$Json$Decode$field,
 	'features',
 	$elm$json$Json$Decode$list(
-		A3(
-			$elm$json$Json$Decode$map2,
+		A4(
+			$elm$json$Json$Decode$map3,
 			$author$project$Main$Properties,
 			A2(
 				$elm$json$Json$Decode$field,
@@ -6193,7 +6194,14 @@ var $author$project$Main$geoDecoder = A2(
 					$elm$json$Json$Decode$field,
 					'infections',
 					$elm$json$Json$Decode$dict(
-						$elm$json$Json$Decode$dict($elm$json$Json$Decode$int)))))));
+						$elm$json$Json$Decode$dict($elm$json$Json$Decode$int)))),
+			A2(
+				$elm$json$Json$Decode$field,
+				'properties',
+				A2(
+					$elm$json$Json$Decode$field,
+					'tests',
+					$elm$json$Json$Decode$dict($elm$json$Json$Decode$int))))));
 var $elm$http$Http$emptyBody = _Http_emptyBody;
 var $elm$http$Http$Request = function (a) {
 	return {$: 1, a: a};
@@ -6244,7 +6252,7 @@ var $elm$http$Http$updateReqs = F3(
 					return A2(
 						$elm$core$Task$andThen,
 						function (pid) {
-							var _v4 = req.aO;
+							var _v4 = req.aP;
 							if (_v4.$ === 1) {
 								return A3($elm$http$Http$updateReqs, router, otherCmds, reqs);
 							} else {
@@ -6331,14 +6339,14 @@ var $elm$http$Http$cmdMap = F2(
 			var r = cmd.a;
 			return $elm$http$Http$Request(
 				{
-					aV: r.aV,
-					aX: r.aX,
-					a0: A2(_Http_mapExpect, func, r.a0),
+					aW: r.aW,
+					aY: r.aY,
+					a1: A2(_Http_mapExpect, func, r.a1),
 					ak: r.ak,
-					a6: r.a6,
-					bh: r.bh,
-					aO: r.aO,
-					bk: r.bk
+					a7: r.a7,
+					bi: r.bi,
+					aP: r.aP,
+					bl: r.bl
 				});
 		}
 	});
@@ -6361,11 +6369,11 @@ var $elm$http$Http$subscription = _Platform_leaf('Http');
 var $elm$http$Http$request = function (r) {
 	return $elm$http$Http$command(
 		$elm$http$Http$Request(
-			{aV: false, aX: r.aX, a0: r.a0, ak: r.ak, a6: r.a6, bh: r.bh, aO: r.aO, bk: r.bk}));
+			{aW: false, aY: r.aY, a1: r.a1, ak: r.ak, a7: r.a7, bi: r.bi, aP: r.aP, bl: r.bl}));
 };
 var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
-		{aX: $elm$http$Http$emptyBody, a0: r.a0, ak: _List_Nil, a6: 'GET', bh: $elm$core$Maybe$Nothing, aO: $elm$core$Maybe$Nothing, bk: r.bk});
+		{aY: $elm$http$Http$emptyBody, a1: r.a1, ak: _List_Nil, a7: 'GET', bi: $elm$core$Maybe$Nothing, aP: $elm$core$Maybe$Nothing, bl: r.bl});
 };
 var $elm$time$Time$Posix = $elm$core$Basics$identity;
 var $elm$time$Time$millisToPosix = $elm$core$Basics$identity;
@@ -6374,7 +6382,7 @@ var $author$project$Main$init = function (_v0) {
 		A9(
 			$author$project$Main$Model,
 			{
-				p: $elm$time$Time$millisToPosix(0),
+				q: $elm$time$Time$millisToPosix(0),
 				N: $elm$time$Time$millisToPosix(0),
 				H: $elm$time$Time$millisToPosix(0)
 			},
@@ -6391,10 +6399,13 @@ var $author$project$Main$init = function (_v0) {
 				[
 					$elm$http$Http$get(
 					{
-						a0: A2($elm$http$Http$expectJson, $author$project$Main$JsonResponse, $author$project$Main$geoDecoder),
-						bk: '/geo.json'
+						a1: A2($elm$http$Http$expectJson, $author$project$Main$JsonResponse, $author$project$Main$geoDecoder),
+						bl: '/geo.json'
 					})
 				])));
+};
+var $author$project$Main$Hover = function (a) {
+	return {$: 8, a: a};
 };
 var $author$project$Main$IncDate = function (a) {
 	return {$: 0, a: a};
@@ -6403,6 +6414,7 @@ var $elm$core$Basics$always = F2(
 	function (a, _v0) {
 		return a;
 	});
+var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$time$Time$Every = F2(
 	function (a, b) {
 		return {$: 0, a: a, b: b};
@@ -6669,14 +6681,18 @@ var $elm$time$Time$every = F2(
 		return $elm$time$Time$subscription(
 			A2($elm$time$Time$Every, interval, tagger));
 	});
-var $elm$core$Platform$Sub$batch = _Platform_batch;
-var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
+var $author$project$Main$subPostcode = _Platform_incomingPort('subPostcode', $elm$json$Json$Decode$string);
 var $author$project$Main$subscriptions = function (model) {
-	return model.o ? A2(
-		$elm$time$Time$every,
-		500,
-		$elm$core$Basics$always(
-			$author$project$Main$IncDate(1))) : $elm$core$Platform$Sub$none;
+	return model.p ? $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$author$project$Main$subPostcode($author$project$Main$Hover),
+				A2(
+				$elm$time$Time$every,
+				500,
+				$elm$core$Basics$always(
+					$author$project$Main$IncDate(1)))
+			])) : $author$project$Main$subPostcode($author$project$Main$Hover);
 };
 var $rtfeldman$elm_iso8601_date_strings$Iso8601$fromMonth = function (month) {
 	switch (month) {
@@ -6766,7 +6782,7 @@ var $elm$time$Time$toCivil = function (minutes) {
 	return {
 		ae: (dayOfYear - ((((153 * mp) + 2) / 5) | 0)) + 1,
 		as: month,
-		aU: year + ((month <= 2) ? 1 : 0)
+		aV: year + ((month <= 2) ? 1 : 0)
 	};
 };
 var $elm$time$Time$toDay = F2(
@@ -6890,7 +6906,7 @@ var $elm$time$Time$toSecond = F2(
 var $elm$time$Time$toYear = F2(
 	function (zone, time) {
 		return $elm$time$Time$toCivil(
-			A2($elm$time$Time$toAdjustedMinutes, zone, time)).aU;
+			A2($elm$time$Time$toAdjustedMinutes, zone, time)).aV;
 	});
 var $elm$time$Time$utc = A2($elm$time$Time$Zone, 0, _List_Nil);
 var $rtfeldman$elm_iso8601_date_strings$Iso8601$fromTime = function (time) {
@@ -6920,7 +6936,7 @@ var $rtfeldman$elm_iso8601_date_strings$Iso8601$fromTime = function (time) {
 };
 var $author$project$Main$incDay = F2(
 	function (dates, sign) {
-		var newDayM = $elm$time$Time$posixToMillis(dates.p) + (sign * 86400000);
+		var newDayM = $elm$time$Time$posixToMillis(dates.q) + (sign * 86400000);
 		var minM = $elm$time$Time$posixToMillis(dates.H);
 		var maxM = $elm$time$Time$posixToMillis(dates.N);
 		return (_Utils_cmp(newDayM, maxM) > 0) ? $elm$time$Time$millisToPosix(maxM) : ((_Utils_cmp(newDayM, minM) < 0) ? $elm$time$Time$millisToPosix(minM) : $elm$time$Time$millisToPosix(newDayM));
@@ -7012,7 +7028,7 @@ var $elm$parser$Parser$Advanced$AddRight = F2(
 	});
 var $elm$parser$Parser$Advanced$DeadEnd = F4(
 	function (row, col, problem, contextStack) {
-		return {ad: col, aZ: contextStack, ax: problem, aH: row};
+		return {ad: col, a_: contextStack, ax: problem, aH: row};
 	});
 var $elm$parser$Parser$Advanced$Empty = {$: 0};
 var $elm$parser$Parser$Advanced$fromState = F2(
@@ -7797,23 +7813,23 @@ var $author$project$Main$refilter = function (model) {
 				return ((_Utils_cmp(
 					$elm$time$Time$posixToMillis(posix),
 					function () {
-						var _v1 = model.V;
+						var _v1 = model.U;
 						if (_v1.$ === 1) {
 							return $elm$time$Time$posixToMillis(model.j.H);
 						} else {
 							var num = _v1.a;
-							return $elm$time$Time$posixToMillis(model.j.p) - (num * 86400000);
+							return $elm$time$Time$posixToMillis(model.j.q) - (num * 86400000);
 						}
 					}()) > 0) && (_Utils_cmp(
 					$elm$time$Time$posixToMillis(posix),
-					$elm$time$Time$posixToMillis(model.j.p)) < 1)) ? A3($elm$core$Dict$foldl, checkLast, result2, infs) : result2;
+					$elm$time$Time$posixToMillis(model.j.q)) < 1)) ? A3($elm$core$Dict$foldl, checkLast, result2, infs) : result2;
 			}
 		});
 	var checkProps = F2(
 		function (prop, result1) {
 			return A3(
 				$elm$core$Dict$insert,
-				prop.s,
+				prop.n,
 				A3($elm$core$Dict$foldl, checkDates, 0, prop.G),
 				result1);
 		});
@@ -7840,31 +7856,45 @@ var $author$project$Main$update = F2(
 									$rtfeldman$elm_iso8601_date_strings$Iso8601$fromTime(newDate)),
 								j: _Utils_update(
 									dates,
-									{p: newDate}),
-								o: (model.o && _Utils_eq(newDate, dates.N)) ? false : model.o
+									{q: newDate}),
+								p: (model.p && _Utils_eq(newDate, dates.N)) ? false : model.p
 							})),
 					$elm$core$Platform$Cmd$none);
 			case 1:
 				return _Utils_Tuple2(
-					((!model.o) && _Utils_eq(model.j.p, model.j.N)) ? $author$project$Main$refilter(
+					((!model.p) && _Utils_eq(model.j.q, model.j.N)) ? $author$project$Main$refilter(
 						_Utils_update(
 							model,
 							{
 								j: _Utils_update(
 									dates,
-									{p: model.j.H}),
-								o: !model.o
+									{
+										q: $elm$time$Time$millisToPosix(
+											$elm$time$Time$posixToMillis(model.j.H) + function (x) {
+												return x * 86400000;
+											}(
+												function () {
+													var _v1 = model.U;
+													if (!_v1.$) {
+														var v = _v1.a;
+														return v;
+													} else {
+														return 0;
+													}
+												}()))
+									}),
+								p: !model.p
 							})) : _Utils_update(
 						model,
-						{o: !model.o}),
+						{p: !model.p}),
 					$elm$core$Platform$Cmd$none);
 			case 2:
 				var result = msg.a;
-				var _v1 = $elm$core$Result$toMaybe(result);
-				if (_v1.$ === 1) {
+				var _v2 = $elm$core$Result$toMaybe(result);
+				if (_v2.$ === 1) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
-					var geoJson = _v1.a;
+					var geoJson = _v2.a;
 					return _Utils_Tuple2(
 						function () {
 							var newMax = $author$project$Main$maxDateFold(geoJson);
@@ -7879,7 +7909,7 @@ var $author$project$Main$update = F2(
 										j: _Utils_update(
 											dates,
 											{
-												p: newMax,
+												q: newMax,
 												N: newMax,
 												H: $author$project$Main$minDateFold(geoJson)
 											}),
@@ -7891,16 +7921,16 @@ var $author$project$Main$update = F2(
 				}
 			case 3:
 				var string = msg.a;
-				var _v2 = $elm$core$Result$toMaybe(
+				var _v3 = $elm$core$Result$toMaybe(
 					$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(string));
-				if (_v2.$ === 1) {
+				if (_v3.$ === 1) {
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{z: string}),
 						$elm$core$Platform$Cmd$none);
 				} else {
-					var posix = _v2.a;
+					var posix = _v3.a;
 					return _Utils_Tuple2(
 						$author$project$Main$refilter(
 							_Utils_update(
@@ -7909,7 +7939,7 @@ var $author$project$Main$update = F2(
 									z: string,
 									j: _Utils_update(
 										dates,
-										{p: posix})
+										{q: posix})
 								})),
 						$elm$core$Platform$Cmd$none);
 				}
@@ -7918,7 +7948,7 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{s: postcode}),
+						{n: postcode}),
 					$elm$core$Platform$Cmd$none);
 			case 5:
 				var name = msg.a;
@@ -7938,14 +7968,21 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								V: $elm$core$String$toInt(val)
+								U: $elm$core$String$toInt(val)
 							})),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 7:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{L: !model.L}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var postcode = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{n: postcode}),
 					$elm$core$Platform$Cmd$none);
 		}
 	});
@@ -8164,7 +8201,7 @@ var $author$project$Main$jsonEncode = function (val) {
 };
 var $elm$html$Html$option = _VirtualDom_node('option');
 var $author$project$Main$manyOptions = function (dates) {
-	var numOpts = ((($elm$time$Time$posixToMillis(dates.p) - $elm$time$Time$posixToMillis(dates.H)) / 86400000) | 0) + 1;
+	var numOpts = ((($elm$time$Time$posixToMillis(dates.q) - $elm$time$Time$posixToMillis(dates.H)) / 86400000) | 0) + 1;
 	var optionsTill = function (num) {
 		return (_Utils_cmp(num, numOpts) > 0) ? _List_Nil : A2(
 			$elm$core$List$cons,
@@ -8249,6 +8286,7 @@ var $elm$core$List$filter = F2(
 			_List_Nil,
 			list);
 	});
+var $elm$core$String$fromFloat = _String_fromNumber;
 var $elm$html$Html$p = _VirtualDom_node('p');
 var $elm$html$Html$strong = _VirtualDom_node('strong');
 var $elm$core$Dict$values = function (dict) {
@@ -8261,8 +8299,82 @@ var $elm$core$Dict$values = function (dict) {
 		_List_Nil,
 		dict);
 };
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var $author$project$Main$postcodeDetails = F2(
 	function (postcode, properties) {
+		var showTests = function (tests) {
+			var total = A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				A2($elm$core$Dict$get, 'tests', tests));
+			var cases = A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				A2($elm$core$Dict$get, 'cases', tests));
+			return A2(
+				$elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$strong,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Tests: ')
+									])),
+								$elm$html$Html$text(
+								$elm$core$String$fromInt(total))
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$strong,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Cases: ')
+									])),
+								$elm$html$Html$text(
+								$elm$core$String$fromInt(cases))
+							])),
+						A2(
+						$elm$html$Html$p,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								$elm$html$Html$strong,
+								_List_Nil,
+								_List_fromArray(
+									[
+										$elm$html$Html$text('Cases/Tests: ')
+									])),
+								$elm$html$Html$text(
+								A3(
+									$elm$core$String$slice,
+									0,
+									5,
+									$elm$core$String$fromFloat((100 * cases) / total)) + '%')
+							]))
+					]));
+		};
 		var infPrint = F2(
 			function (inf, num) {
 				return A2(
@@ -8302,7 +8414,7 @@ var $author$project$Main$postcodeDetails = F2(
 			A2(
 				$elm$core$List$filter,
 				function (p) {
-					return _Utils_eq(postcode, p.s);
+					return _Utils_eq(postcode, p.n);
 				},
 				properties));
 		if (_v0.$ === 1) {
@@ -8312,8 +8424,16 @@ var $author$project$Main$postcodeDetails = F2(
 			return A2(
 				$elm$html$Html$div,
 				_List_Nil,
-				$elm$core$Dict$values(
-					A2($elm$core$Dict$map, datePrint, prop.G)));
+				_List_fromArray(
+					[
+						showTests(prop.aO),
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						$elm$core$List$reverse(
+							$elm$core$Dict$values(
+								A2($elm$core$Dict$map, datePrint, prop.G))))
+					]));
 		}
 	});
 var $elm$html$Html$select = _VirtualDom_node('select');
@@ -8324,7 +8444,7 @@ var $author$project$Main$view = function (model) {
 	var postcodeCheck = A2(
 		$elm$core$List$any,
 		function (p) {
-			return _Utils_eq(model.s, p.s);
+			return _Utils_eq(model.n, p.n);
 		},
 		model.R);
 	return A2(
@@ -8470,7 +8590,7 @@ var $author$project$Main$view = function (model) {
 						'Timeline',
 						_List_fromArray(
 							[
-								model.o ? A2($author$project$Main$playButton, 'Pause', 'button is-warning') : A2($author$project$Main$playButton, 'Start', 'button is-success')
+								model.p ? A2($author$project$Main$playButton, 'Pause', 'button is-warning') : A2($author$project$Main$playButton, 'Start', 'button is-success')
 							])),
 						A2(
 						$author$project$Main$formField,
@@ -8481,14 +8601,15 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$input,
 								_List_fromArray(
 									[
-										(model.s === '') ? $elm$html$Html$Attributes$class('input') : (postcodeCheck ? $elm$html$Html$Attributes$class('input is-success') : $elm$html$Html$Attributes$class('input is-danger')),
+										(model.n === '') ? $elm$html$Html$Attributes$class('input') : (postcodeCheck ? $elm$html$Html$Attributes$class('input is-success') : $elm$html$Html$Attributes$class('input is-danger')),
 										$elm$html$Html$Attributes$type_('text'),
 										$elm$html$Html$Events$onInput($author$project$Main$CheckPostcode),
-										$elm$html$Html$Attributes$placeholder('Postcode')
+										$elm$html$Html$Attributes$placeholder('Postcode'),
+										$elm$html$Html$Attributes$value(model.n)
 									]),
 								_List_Nil)
 							])),
-						postcodeCheck ? A2($author$project$Main$postcodeDetails, model.s, model.R) : A2($elm$html$Html$div, _List_Nil, _List_Nil),
+						postcodeCheck ? A2($author$project$Main$postcodeDetails, model.n, model.R) : A2($elm$html$Html$div, _List_Nil, _List_Nil),
 						A2(
 						$author$project$Main$formField,
 						'Cases in last n days',
@@ -8522,6 +8643,6 @@ var $author$project$Main$view = function (model) {
 			]));
 };
 var $author$project$Main$main = $elm$browser$Browser$element(
-	{a4: $author$project$Main$init, bg: $author$project$Main$subscriptions, bj: $author$project$Main$update, bl: $author$project$Main$view});
+	{a5: $author$project$Main$init, bh: $author$project$Main$subscriptions, bk: $author$project$Main$update, bm: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(0))(0)}});}(this));

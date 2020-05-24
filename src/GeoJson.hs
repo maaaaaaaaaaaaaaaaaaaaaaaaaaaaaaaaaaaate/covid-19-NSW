@@ -12,6 +12,7 @@ import Data.LinearRing
 import Data.Validation
 
 import InfectionSource (fetchInfectionSource)
+import TestData (fetchTestData)
 
 encodeGeoJson :: IO (BS.ByteString)
 encodeGeoJson = do
@@ -26,30 +27,34 @@ data Properties = Properties {
   } deriving (Show)
 instance FromJSON Properties where
     parseJSON = withObject "Properties" $ \v -> Properties
-        <$> v .: "postcode"
-        <*> v .: "area"
+        <$> v .: "postcode'"
+        <*> v .: "area'"
 
 data NewProps = NewProps {
   postcode :: String,
   area :: Double,
-  infections :: Infections
+  infections :: Infections,
+  tests :: Tests
   } deriving (Generic)
 instance ToJSON NewProps where
 
 type Infections = M.Map String (M.Map String Int)
+type Tests = M.Map String Int
 
 fetchPostcodeGeo :: IO (Maybe (GeoFeatureCollection NewProps))
 fetchPostcodeGeo = do
-  theMap <- fetchInfectionSource
+  infections <- fetchInfectionSource
+  tests <- fetchTestData
   decodeFileStrict "postcode_point.json" >>= return . fmap (
-    \(GeoFeatureCollection box geo) -> GeoFeatureCollection box (fmap (geoFeature theMap) . S.filter (inMap theMap) $ geo)
+    \(GeoFeatureCollection box geo) -> GeoFeatureCollection box (fmap (geoFeature infections tests) . S.filter (inMap infections) $ geo)
     )
 
 inMap :: Eq a => M.Map String a -> GeoFeature Properties -> Bool
 inMap theMap (GeoFeature _ _ props _) = M.lookup (postcode' props) theMap /= Nothing
 
-geoFeature :: M.Map String Infections -> GeoFeature Properties -> GeoFeature NewProps
-geoFeature theMap (GeoFeature bb geo props fid) = GeoFeature bb geo newProps fid
-  where newProps = case M.lookup (postcode' props) theMap of
-          Nothing -> NewProps (postcode' props) (area' props) M.empty
-          Just props' -> NewProps (postcode' props) (area' props) props'
+geoFeature :: M.Map String Infections -> M.Map String Tests -> GeoFeature Properties -> GeoFeature NewProps
+geoFeature infections' tests' (GeoFeature bb geo props fid) = GeoFeature bb geo newProps fid
+  where combineMaps = M.intersectionWith (,) infections' tests'
+        newProps = case M.lookup (postcode' props) combineMaps of
+          Nothing -> NewProps (postcode' props) (area' props) M.empty M.empty
+          Just (infections'', tests'') -> NewProps (postcode' props) (area' props) infections'' tests''

@@ -19,6 +19,7 @@ extra-source-files:  CHANGELOG.md
 executable CovidNSW
   main-is:             Main.hs
   other-modules: InfectionSource
+                 TestData
                  GeoJson
                  Persist
                  Serve
