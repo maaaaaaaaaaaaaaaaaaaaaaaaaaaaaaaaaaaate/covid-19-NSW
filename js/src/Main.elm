@@ -58,7 +58,7 @@ init _ =
           , maxDate = Time.millisToPosix 0}
         Nothing Dict.empty Dict.empty [] "" "" False False
   , Cmd.batch [ Http.get
-                   { url = "/geo.json"
+                   { url = "./geo.json"
                    , expect = Http.expectJson JsonResponse geoDecoder}
               ]
   )
