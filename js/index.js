@@ -66,7 +66,7 @@ var vector = new VectorLayer({
     source: new Cluster({
 	source: new VectorSource({
 	    format: new GeoJSON(),
-	    url: '/geo.json?' + Date.now()
+	    url: './geo.json?' + Date.now()
 	}),
 	geometryFunction: function(feature) {
 	    if(sourceFilter[feature.get('postcode')] == 0) {

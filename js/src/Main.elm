@@ -110,12 +110,12 @@ update msg model =
             case Result.toMaybe result of
                 Nothing -> (model, Cmd.none)
                 Just geoJson ->
-                    (let newMax = maxDateFold geoJson
+                    (let newMax = maxDate geoJson
                      in {model
                             | unfiltered = geoJson
                             , sources = infectionTypes geoJson
                             , dates = { dates
-                                          | minDate = minDateFold geoJson
+                                          | minDate = minDate geoJson
                                           , maxDate = newMax
                                           , date = newMax }
                             , dateVal = String.left 10 <| fromTime newMax }
@@ -227,25 +227,19 @@ infectionTypes data =
                                     else Dict.insert inf True result3
     in List.foldl checkProps Dict.empty data
 
-minDateFold data =
-    List.foldl (\p -> \r ->
-                    case p.infections |> Dict.keys |> List.head of
-                        Just v -> if v < r then v else r
-                        Nothing -> r)
-        "9999-99-99" data
-            |> \s -> case toTime s |> Result.toMaybe of
-                         Just posix -> millisToPosix <| posixToMillis posix - 86400000
-                         Nothing -> millisToPosix 0
+minDate data = List.map (\p -> p.infections
+                        |> Dict.keys |> List.head
+                        |> Maybe.andThen (\v -> toTime v |> Result.toMaybe)
+                        ) data
+             |> List.filterMap (Maybe.map posixToMillis)
+             |> List.minimum |> Maybe.withDefault 0 |> millisToPosix
 
-maxDateFold data =
-    List.foldl (\p -> \r ->
-                    case p.infections |> Dict.keys |> List.reverse |> List.head of
-                        Just v -> if v > r then v else r
-                        Nothing -> r)
-        "0000-00-00" data
-            |> \s -> case toTime s |> Result.toMaybe of
-                         Just posix -> posix
-                         Nothing -> millisToPosix 0
+maxDate data = List.map (\p -> p.infections
+                        |> Dict.keys |> List.reverse |> List.head
+                        |> Maybe.andThen (\v -> toTime v |> Result.toMaybe)
+                        ) data
+             |> List.filterMap (Maybe.map posixToMillis)
+             |> List.maximum |> Maybe.withDefault 0 |> millisToPosix
 
 showProp property = p [] [text property.postcode]
 

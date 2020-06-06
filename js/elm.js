@@ -6400,7 +6400,7 @@ var $author$project$Main$init = function (_v0) {
 					$elm$http$Http$get(
 					{
 						a1: A2($elm$http$Http$expectJson, $author$project$Main$JsonResponse, $author$project$Main$geoDecoder),
-						bl: '/geo.json'
+						bl: './geo.json'
 					})
 				])));
 };
@@ -6965,11 +6965,40 @@ var $author$project$Main$infectionTypes = function (data) {
 		});
 	return A3($elm$core$List$foldl, checkProps, $elm$core$Dict$empty, data);
 };
+var $elm$core$Maybe$andThen = F2(
+	function (callback, maybeValue) {
+		if (!maybeValue.$) {
+			var value = maybeValue.a;
+			return callback(value);
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
 var $elm$core$List$head = function (list) {
 	if (list.b) {
 		var x = list.a;
 		var xs = list.b;
 		return $elm$core$Maybe$Just(x);
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return $elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return $elm$core$Maybe$Nothing;
+		}
+	});
+var $elm$core$List$maximum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
 	} else {
 		return $elm$core$Maybe$Nothing;
 	}
@@ -7723,63 +7752,75 @@ var $elm$parser$Parser$run = F2(
 var $rtfeldman$elm_iso8601_date_strings$Iso8601$toTime = function (str) {
 	return A2($elm$parser$Parser$run, $rtfeldman$elm_iso8601_date_strings$Iso8601$iso8601, str);
 };
-var $author$project$Main$maxDateFold = function (data) {
-	return function (s) {
-		var _v1 = $elm$core$Result$toMaybe(
-			$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(s));
-		if (!_v1.$) {
-			var posix = _v1.a;
-			return posix;
+var $elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (!maybe.$) {
+			var value = maybe.a;
+			return value;
 		} else {
-			return $elm$time$Time$millisToPosix(0);
+			return _default;
 		}
-	}(
-		A3(
-			$elm$core$List$foldl,
-			function (p) {
-				return function (r) {
-					var _v0 = $elm$core$List$head(
-						$elm$core$List$reverse(
-							$elm$core$Dict$keys(p.G)));
-					if (!_v0.$) {
-						var v = _v0.a;
-						return (_Utils_cmp(v, r) > 0) ? v : r;
-					} else {
-						return r;
-					}
-				};
-			},
-			'0000-00-00',
-			data));
+	});
+var $author$project$Main$maxDate = function (data) {
+	return $elm$time$Time$millisToPosix(
+		A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$maximum(
+				A2(
+					$elm$core$List$filterMap,
+					$elm$core$Maybe$map($elm$time$Time$posixToMillis),
+					A2(
+						$elm$core$List$map,
+						function (p) {
+							return A2(
+								$elm$core$Maybe$andThen,
+								function (v) {
+									return $elm$core$Result$toMaybe(
+										$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(v));
+								},
+								$elm$core$List$head(
+									$elm$core$List$reverse(
+										$elm$core$Dict$keys(p.G))));
+						},
+						data)))));
 };
-var $author$project$Main$minDateFold = function (data) {
-	return function (s) {
-		var _v1 = $elm$core$Result$toMaybe(
-			$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(s));
-		if (!_v1.$) {
-			var posix = _v1.a;
-			return $elm$time$Time$millisToPosix(
-				$elm$time$Time$posixToMillis(posix) - 86400000);
-		} else {
-			return $elm$time$Time$millisToPosix(0);
-		}
-	}(
-		A3(
-			$elm$core$List$foldl,
-			function (p) {
-				return function (r) {
-					var _v0 = $elm$core$List$head(
-						$elm$core$Dict$keys(p.G));
-					if (!_v0.$) {
-						var v = _v0.a;
-						return (_Utils_cmp(v, r) < 0) ? v : r;
-					} else {
-						return r;
-					}
-				};
-			},
-			'9999-99-99',
-			data));
+var $elm$core$Basics$min = F2(
+	function (x, y) {
+		return (_Utils_cmp(x, y) < 0) ? x : y;
+	});
+var $elm$core$List$minimum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$min, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
+var $author$project$Main$minDate = function (data) {
+	return $elm$time$Time$millisToPosix(
+		A2(
+			$elm$core$Maybe$withDefault,
+			0,
+			$elm$core$List$minimum(
+				A2(
+					$elm$core$List$filterMap,
+					$elm$core$Maybe$map($elm$time$Time$posixToMillis),
+					A2(
+						$elm$core$List$map,
+						function (p) {
+							return A2(
+								$elm$core$Maybe$andThen,
+								function (v) {
+									return $elm$core$Result$toMaybe(
+										$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(v));
+								},
+								$elm$core$List$head(
+									$elm$core$Dict$keys(p.G)));
+						},
+						data)))));
 };
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Dict$isEmpty = function (dict) {
@@ -7897,7 +7938,7 @@ var $author$project$Main$update = F2(
 					var geoJson = _v2.a;
 					return _Utils_Tuple2(
 						function () {
-							var newMax = $author$project$Main$maxDateFold(geoJson);
+							var newMax = $author$project$Main$maxDate(geoJson);
 							return $author$project$Main$refilter(
 								_Utils_update(
 									model,
@@ -7911,7 +7952,7 @@ var $author$project$Main$update = F2(
 											{
 												q: newMax,
 												N: newMax,
-												H: $author$project$Main$minDateFold(geoJson)
+												H: $author$project$Main$minDate(geoJson)
 											}),
 										D: $author$project$Main$infectionTypes(geoJson),
 										R: geoJson
@@ -8299,15 +8340,6 @@ var $elm$core$Dict$values = function (dict) {
 		_List_Nil,
 		dict);
 };
-var $elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (!maybe.$) {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var $author$project$Main$postcodeDetails = F2(
 	function (postcode, properties) {
 		var showTests = function (tests) {
