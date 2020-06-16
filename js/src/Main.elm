@@ -97,11 +97,8 @@ update msg model =
         PlayTimeline -> (if not model.isPlaying && model.dates.date == model.dates.maxDate
                          then { model
                                   | isPlaying = not model.isPlaying,
-                                    dates = { dates | date = millisToPosix (posixToMillis model.dates.minDate +
-                                                  ((case model.numDays of
-                                                       Just v -> v
-                                                       Nothing -> 0)
-                                                  |> \x -> x * 86400000))} }
+                                    dates = { dates | date = millisToPosix <| posixToMillis model.dates.minDate +
+                                                  (Maybe.withDefault 0 model.numDays)*86400000} }
                              |> refilter
                          else { model | isPlaying = not model.isPlaying }
                         , Cmd.none)
@@ -207,7 +204,7 @@ view model =
             , if postcodeCheck
               then postcodeDetails model.postcode model.unfiltered
               else div [] []
-            , formField "Cases in last n days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
+            , formField "Cases in last x days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
             , formField "Filter" (List.map formCheckbox <| Dict.toList model.sources)
             ]
         ]
@@ -227,19 +224,16 @@ infectionTypes data =
                                     else Dict.insert inf True result3
     in List.foldl checkProps Dict.empty data
 
-minDate data = List.map (\p -> p.infections
-                        |> Dict.keys |> List.head
-                        |> Maybe.andThen (\v -> toTime v |> Result.toMaybe)
-                        ) data
-             |> List.filterMap (Maybe.map posixToMillis)
-             |> List.minimum |> Maybe.withDefault 0 |> millisToPosix
+minDate data = timeParse List.minimum data
 
-maxDate data = List.map (\p -> p.infections
+maxDate data = timeParse List.maximum data
+
+timeParse f data = List.map (\p -> p.infections
                         |> Dict.keys |> List.reverse |> List.head
                         |> Maybe.andThen (\v -> toTime v |> Result.toMaybe)
                         ) data
              |> List.filterMap (Maybe.map posixToMillis)
-             |> List.maximum |> Maybe.withDefault 0 |> millisToPosix
+             |> f |> Maybe.withDefault 0 |> millisToPosix
 
 showProp property = p [] [text property.postcode]
 

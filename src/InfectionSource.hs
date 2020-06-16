@@ -13,6 +13,7 @@ import qualified Data.Map as M
 import Data.Time
 import Data.Time.Format
 import Data.Maybe
+
 nswHealthUrl :: String
 nswHealthUrl = "https://data.nsw.gov.au/data/dataset/97ea2424-abaf-4f3e-a9f2-b5c883f42b6a/resource/2776dbb8-f807-4fb2-b1ed-184a6fc2c8aa/download/covid-19-cases-by-notification-date-location-and-likely-source-of-infection.csv"
 
