@@ -6198,10 +6198,7 @@ var $author$project$Main$geoDecoder = A2(
 			A2(
 				$elm$json$Json$Decode$field,
 				'properties',
-				A2(
-					$elm$json$Json$Decode$field,
-					'tests',
-					$elm$json$Json$Decode$dict($elm$json$Json$Decode$int))))));
+				A2($elm$json$Json$Decode$field, 'tests', $elm$json$Json$Decode$int)))));
 var $elm$http$Http$emptyBody = _Http_emptyBody;
 var $elm$http$Http$Request = function (a) {
 	return {$: 1, a: a};
@@ -6965,6 +6962,16 @@ var $author$project$Main$infectionTypes = function (data) {
 		});
 	return A3($elm$core$List$foldl, checkProps, $elm$core$Dict$empty, data);
 };
+var $elm$core$List$maximum = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return $elm$core$Maybe$Just(
+			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
 var $elm$core$Maybe$andThen = F2(
 	function (callback, maybeValue) {
 		if (!maybeValue.$) {
@@ -6993,16 +7000,6 @@ var $elm$core$Maybe$map = F2(
 			return $elm$core$Maybe$Nothing;
 		}
 	});
-var $elm$core$List$maximum = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return $elm$core$Maybe$Just(
-			A3($elm$core$List$foldl, $elm$core$Basics$max, x, xs));
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
 var $elm$core$Result$toMaybe = function (result) {
 	if (!result.$) {
 		var v = result.a;
@@ -7761,29 +7758,33 @@ var $elm$core$Maybe$withDefault = F2(
 			return _default;
 		}
 	});
-var $author$project$Main$maxDate = function (data) {
-	return $elm$time$Time$millisToPosix(
-		A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			$elm$core$List$maximum(
-				A2(
-					$elm$core$List$filterMap,
-					$elm$core$Maybe$map($elm$time$Time$posixToMillis),
+var $author$project$Main$timeParse = F2(
+	function (f, data) {
+		return $elm$time$Time$millisToPosix(
+			A2(
+				$elm$core$Maybe$withDefault,
+				0,
+				f(
 					A2(
-						$elm$core$List$map,
-						function (p) {
-							return A2(
-								$elm$core$Maybe$andThen,
-								function (v) {
-									return $elm$core$Result$toMaybe(
-										$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(v));
-								},
-								$elm$core$List$head(
-									$elm$core$List$reverse(
-										$elm$core$Dict$keys(p.G))));
-						},
-						data)))));
+						$elm$core$List$filterMap,
+						$elm$core$Maybe$map($elm$time$Time$posixToMillis),
+						A2(
+							$elm$core$List$map,
+							function (p) {
+								return A2(
+									$elm$core$Maybe$andThen,
+									function (v) {
+										return $elm$core$Result$toMaybe(
+											$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(v));
+									},
+									$elm$core$List$head(
+										$elm$core$List$reverse(
+											$elm$core$Dict$keys(p.G))));
+							},
+							data)))));
+	});
+var $author$project$Main$maxDate = function (data) {
+	return A2($author$project$Main$timeParse, $elm$core$List$maximum, data);
 };
 var $elm$core$Basics$min = F2(
 	function (x, y) {
@@ -7800,27 +7801,7 @@ var $elm$core$List$minimum = function (list) {
 	}
 };
 var $author$project$Main$minDate = function (data) {
-	return $elm$time$Time$millisToPosix(
-		A2(
-			$elm$core$Maybe$withDefault,
-			0,
-			$elm$core$List$minimum(
-				A2(
-					$elm$core$List$filterMap,
-					$elm$core$Maybe$map($elm$time$Time$posixToMillis),
-					A2(
-						$elm$core$List$map,
-						function (p) {
-							return A2(
-								$elm$core$Maybe$andThen,
-								function (v) {
-									return $elm$core$Result$toMaybe(
-										$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(v));
-								},
-								$elm$core$List$head(
-									$elm$core$Dict$keys(p.G)));
-						},
-						data)))));
+	return A2($author$project$Main$timeParse, $elm$core$List$minimum, data);
 };
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Dict$isEmpty = function (dict) {
@@ -7911,18 +7892,7 @@ var $author$project$Main$update = F2(
 									dates,
 									{
 										q: $elm$time$Time$millisToPosix(
-											$elm$time$Time$posixToMillis(model.j.H) + function (x) {
-												return x * 86400000;
-											}(
-												function () {
-													var _v1 = model.U;
-													if (!_v1.$) {
-														var v = _v1.a;
-														return v;
-													} else {
-														return 0;
-													}
-												}()))
+											$elm$time$Time$posixToMillis(model.j.H) + (A2($elm$core$Maybe$withDefault, 0, model.U) * 86400000))
 									}),
 								p: !model.p
 							})) : _Utils_update(
@@ -7931,11 +7901,11 @@ var $author$project$Main$update = F2(
 					$elm$core$Platform$Cmd$none);
 			case 2:
 				var result = msg.a;
-				var _v2 = $elm$core$Result$toMaybe(result);
-				if (_v2.$ === 1) {
+				var _v1 = $elm$core$Result$toMaybe(result);
+				if (_v1.$ === 1) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
-					var geoJson = _v2.a;
+					var geoJson = _v1.a;
 					return _Utils_Tuple2(
 						function () {
 							var newMax = $author$project$Main$maxDate(geoJson);
@@ -7962,16 +7932,16 @@ var $author$project$Main$update = F2(
 				}
 			case 3:
 				var string = msg.a;
-				var _v3 = $elm$core$Result$toMaybe(
+				var _v2 = $elm$core$Result$toMaybe(
 					$rtfeldman$elm_iso8601_date_strings$Iso8601$toTime(string));
-				if (_v3.$ === 1) {
+				if (_v2.$ === 1) {
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
 							{z: string}),
 						$elm$core$Platform$Cmd$none);
 				} else {
-					var posix = _v3.a;
+					var posix = _v2.a;
 					return _Utils_Tuple2(
 						$author$project$Main$refilter(
 							_Utils_update(
@@ -8170,7 +8140,7 @@ var $author$project$Main$formField = F2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('field')
+					$elm$html$Html$Attributes$class('field box')
 				]),
 			_List_fromArray(
 				[
@@ -8330,6 +8300,9 @@ var $elm$core$List$filter = F2(
 var $elm$core$String$fromFloat = _String_fromNumber;
 var $elm$html$Html$p = _VirtualDom_node('p');
 var $elm$html$Html$strong = _VirtualDom_node('strong');
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
 var $elm$core$Dict$values = function (dict) {
 	return A3(
 		$elm$core$Dict$foldr,
@@ -8342,70 +8315,76 @@ var $elm$core$Dict$values = function (dict) {
 };
 var $author$project$Main$postcodeDetails = F2(
 	function (postcode, properties) {
-		var showTests = function (tests) {
-			var total = A2(
-				$elm$core$Maybe$withDefault,
-				0,
-				A2($elm$core$Dict$get, 'tests', tests));
-			var cases = A2(
-				$elm$core$Maybe$withDefault,
-				0,
-				A2($elm$core$Dict$get, 'cases', tests));
-			return A2(
-				$elm$html$Html$div,
-				_List_Nil,
-				_List_fromArray(
-					[
+		var showTests = F2(
+			function (tests, cases) {
+				return A2(
+					$elm$html$Html$div,
+					_List_Nil,
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$p,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$strong,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Tests: ')
+										])),
+									$elm$html$Html$text(
+									$elm$core$String$fromInt(tests))
+								])),
+							A2(
+							$elm$html$Html$p,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$strong,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Cases: ')
+										])),
+									$elm$html$Html$text(
+									$elm$core$String$fromInt(cases))
+								])),
+							A2(
+							$elm$html$Html$p,
+							_List_Nil,
+							_List_fromArray(
+								[
+									A2(
+									$elm$html$Html$strong,
+									_List_Nil,
+									_List_fromArray(
+										[
+											$elm$html$Html$text('Cases/Tests: ')
+										])),
+									$elm$html$Html$text(
+									A3(
+										$elm$core$String$slice,
+										0,
+										5,
+										$elm$core$String$fromFloat((100 * cases) / tests)) + '%')
+								]))
+						]));
+			});
+		var infectionSum = function (infs) {
+			return $elm$core$List$sum(
+				A2(
+					$elm$core$List$map,
+					$elm$core$List$sum,
+					$elm$core$Dict$values(
 						A2(
-						$elm$html$Html$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$strong,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('Tests: ')
-									])),
-								$elm$html$Html$text(
-								$elm$core$String$fromInt(total))
-							])),
-						A2(
-						$elm$html$Html$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$strong,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('Cases: ')
-									])),
-								$elm$html$Html$text(
-								$elm$core$String$fromInt(cases))
-							])),
-						A2(
-						$elm$html$Html$p,
-						_List_Nil,
-						_List_fromArray(
-							[
-								A2(
-								$elm$html$Html$strong,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$elm$html$Html$text('Cases/Tests: ')
-									])),
-								$elm$html$Html$text(
-								A3(
-									$elm$core$String$slice,
-									0,
-									5,
-									$elm$core$String$fromFloat((100 * cases) / total)) + '%')
-							]))
-					]));
+							$elm$core$Dict$map,
+							function (_v1) {
+								return $elm$core$Dict$values;
+							},
+							infs))));
 		};
 		var infPrint = F2(
 			function (inf, num) {
@@ -8455,10 +8434,16 @@ var $author$project$Main$postcodeDetails = F2(
 			var prop = _v0.a;
 			return A2(
 				$elm$html$Html$div,
-				_List_Nil,
 				_List_fromArray(
 					[
-						showTests(prop.aO),
+						$elm$html$Html$Attributes$class('box')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						showTests,
+						prop.aO,
+						infectionSum(prop.G)),
 						A2(
 						$elm$html$Html$div,
 						_List_Nil,
@@ -8504,7 +8489,6 @@ var $author$project$Main$view = function (model) {
 				$elm$html$Html$div,
 				model.L ? _List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('box'),
 						$elm$html$Html$Attributes$id('filtered_json'),
 						A2(
 						$elm$html$Html$Attributes$attribute,
@@ -8513,7 +8497,6 @@ var $author$project$Main$view = function (model) {
 						A2($elm$html$Html$Attributes$style, 'display', 'none')
 					]) : _List_fromArray(
 					[
-						$elm$html$Html$Attributes$class('box'),
 						$elm$html$Html$Attributes$id('filtered_json'),
 						A2(
 						$elm$html$Html$Attributes$attribute,
@@ -8543,7 +8526,7 @@ var $author$project$Main$view = function (model) {
 						$elm$html$Html$div,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$class('field has-addons')
+								$elm$html$Html$Attributes$class('box field has-addons')
 							]),
 						_List_fromArray(
 							[
@@ -8644,7 +8627,7 @@ var $author$project$Main$view = function (model) {
 						postcodeCheck ? A2($author$project$Main$postcodeDetails, model.n, model.R) : A2($elm$html$Html$div, _List_Nil, _List_Nil),
 						A2(
 						$author$project$Main$formField,
-						'Cases in last n days',
+						'Cases in last \'x\' number of days',
 						_List_fromArray(
 							[
 								A2(

@@ -67,7 +67,7 @@ init _ =
 type alias Properties =
     { postcode : String
     , infections : Dict String (Dict String Int) -- date, infection type, infection count
-    , tests : Dict String Int
+    , tests : Int
     }
 
 geoDecoder = field "features"
@@ -77,7 +77,7 @@ geoDecoder = field "features"
                           (field "properties"
                                <| field "infections" <| dict <| dict <| int)
                           (field "properties"
-                               <| field "tests" <| dict <| int))
+                               <| field "tests" <| int))
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -177,10 +177,10 @@ view model =
                   then [class "button", onClick ToggleControls]
                   else [class "button", onClick ToggleControls, style "display" "none"]) [text "Show Controls"]
         , div (if model.hideControls
-               then [class "box", id "filtered_json", attribute "data-json" (jsonEncode model.filtered), style "display" "none"]
-               else [class "box", id "filtered_json", attribute "data-json" (jsonEncode model.filtered)])
+               then [id "filtered_json", attribute "data-json" (jsonEncode model.filtered), style "display" "none"]
+               else [id "filtered_json", attribute "data-json" (jsonEncode model.filtered)])
             [ formField "Controls" [button [class "button", onClick ToggleControls] [text "Hide Controls"]]
-            , div [class "field has-addons"]
+            , div [class "box field has-addons"]
                 [ div [class "control"] [button [class "button is-dark", onClick (IncDate -1)] [text "Prev"]]
                 , div [class "control"] [input [ case toTime model.dateVal |> Result.toMaybe of
                                                      Nothing -> class "input is-danger"
@@ -204,7 +204,7 @@ view model =
             , if postcodeCheck
               then postcodeDetails model.postcode model.unfiltered
               else div [] []
-            , formField "Cases in last x days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
+            , formField "Cases in last 'x' number of days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
             , formField "Filter" (List.map formCheckbox <| Dict.toList model.sources)
             ]
         ]
@@ -240,23 +240,22 @@ showProp property = p [] [text property.postcode]
 postcodeDetails postcode properties =
     let datePrint date val = div [] <| strong [] [text date] :: (Dict.values <| Dict.map infPrint val)
         infPrint inf num = p [] [inf ++ ": " |> text, strong [] [String.fromInt num |> text]]
-        showTests tests = let total = Maybe.withDefault 0 (Dict.get "tests" tests)
-                              cases = Maybe.withDefault 0 (Dict.get "cases" tests)
-                          in div []
-                               [ p [] [strong [] [text "Tests: "], String.fromInt total |> text]
+        infectionSum infs = List.sum <| List.map List.sum <| Dict.values <| Dict.map (\_ -> Dict.values) infs
+        showTests tests cases = div []
+                               [ p [] [strong [] [text "Tests: "], String.fromInt tests |> text]
                                , p [] [strong [] [text "Cases: "], String.fromInt cases |> text]
                                , p []
                                    [ strong [] [text "Cases/Tests: "]
                                    , (String.slice 0 5 <| String.fromFloat
-                                         <| 100 * toFloat cases / toFloat total) ++ "%" |> text]
+                                         <| 100 * toFloat cases / toFloat tests) ++ "%" |> text]
                               ]
     in case List.head <| List.filter (\p -> postcode == p.postcode) properties of
         Nothing -> div [] []
-        Just prop -> div [] [showTests prop.tests, div [] (List.reverse <| Dict.values <| Dict.map datePrint prop.infections)]
+        Just prop -> div [class "box"] [showTests prop.tests <| infectionSum prop.infections, div [] (List.reverse <| Dict.values <| Dict.map datePrint prop.infections)]
 
 playButton name classes = button [class classes, onClick PlayTimeline] [text name]
 
-formField name htmls = div [class "field"]
+formField name htmls = div [class "field box"]
                        [ label [class "label"] [text name]
                        , div [class "control"] htmls]
 

@@ -39,6 +39,6 @@ makeMap = foldl (\acc -> \csv ->
                     (M.singleton (case postcode csv of
                                     "" -> "0"
                                     _ -> postcode csv)
-                      . M.singleton (fromMaybe "error" . fmap (formatTime defaultTimeLocale "%0Y-%0m-%0d") . (\v -> v :: Maybe Day) . parseTimeM True defaultTimeLocale "%-d/%0m/%Y" $ notification_date csv) . M.singleton (likely_source_of_infection csv) $ 1)
+                      . M.singleton (notification_date csv) . M.singleton (likely_source_of_infection csv) $ 1)
                     acc
                 ) M.empty

@@ -34,12 +34,11 @@ data NewProps = NewProps {
   postcode :: String,
   area :: Double,
   infections :: Infections,
-  tests :: Tests
+  tests :: Int
   } deriving (Generic)
 instance ToJSON NewProps where
 
 type Infections = M.Map String (M.Map String Int)
-type Tests = M.Map String Int
 
 fetchPostcodeGeo :: IO (Maybe (GeoFeatureCollection NewProps))
 fetchPostcodeGeo = do
@@ -52,9 +51,9 @@ fetchPostcodeGeo = do
 inMap :: Eq a => M.Map String a -> GeoFeature Properties -> Bool
 inMap theMap (GeoFeature _ _ props _) = M.lookup (postcode' props) theMap /= Nothing
 
-geoFeature :: M.Map String Infections -> M.Map String Tests -> GeoFeature Properties -> GeoFeature NewProps
+geoFeature :: M.Map String Infections -> M.Map String Int -> GeoFeature Properties -> GeoFeature NewProps
 geoFeature infections' tests' (GeoFeature bb geo props fid) = GeoFeature bb geo newProps fid
   where combineMaps = M.intersectionWith (,) infections' tests'
         newProps = case M.lookup (postcode' props) combineMaps of
-          Nothing -> NewProps (postcode' props) (area' props) M.empty M.empty
+          Nothing -> NewProps (postcode' props) (area' props) M.empty 0
           Just (infections'', tests'') -> NewProps (postcode' props) (area' props) infections'' tests''
