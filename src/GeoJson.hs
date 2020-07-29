@@ -35,7 +35,7 @@ data NewProps = NewProps {
   area :: Double,
   infections :: Infections,
   tests :: Int
-  } deriving (Generic)
+  } deriving (Generic, Show)
 instance ToJSON NewProps where
 
 type Infections = M.Map String (M.Map String Int)

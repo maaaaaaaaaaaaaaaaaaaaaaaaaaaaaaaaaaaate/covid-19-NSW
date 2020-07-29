@@ -26,8 +26,6 @@ data TestResult = TestResult
   { tests :: Int
   } deriving (Show)
 
-tester = fetchTestData >>= print
-
 fetchTestData = do
   response <- get nswHealthUrl
   let propertyMap = response ^. responseBody ^.. namedCsv . rows . _NamedRecord @CsvRow ^. to makeMap

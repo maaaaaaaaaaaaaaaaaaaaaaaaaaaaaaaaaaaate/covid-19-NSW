@@ -115,7 +115,8 @@ window.onload = function () {
 };
 
 var app = Elm.Main.init({
-    node: document.getElementById('elm-controls')
+    node: document.getElementById('elm-controls'),
+    flags: Date.now()
 });
 
 map.on('pointermove', function(e) {

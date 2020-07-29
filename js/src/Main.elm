@@ -51,14 +51,14 @@ type alias Model =
     , hideControls : Bool
     }
 
-init : () -> (Model, Cmd Msg)
-init _ =
+init : Int -> (Model, Cmd Msg)
+init v =
   ( Model { date = Time.millisToPosix 0
           , minDate = Time.millisToPosix 0
           , maxDate = Time.millisToPosix 0}
         Nothing Dict.empty Dict.empty [] "" "" False False
   , Cmd.batch [ Http.get
-                   { url = "./geo.json"
+                   { url = "./geo.json?" ++ Sting.fromInt v
                    , expect = Http.expectJson JsonResponse geoDecoder}
               ]
   )
@@ -193,6 +193,8 @@ view model =
             , formField "Timeline" [if model.isPlaying
                                     then playButton "Pause" "button is-warning"
                                     else playButton "Start" "button is-success"]
+            , formField "Cases in last 'x' number of days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
+            , formField "Filter" (List.map formCheckbox <| Dict.toList model.sources)
             , formField "Postcode" [input [ if model.postcode == "" then class "input"
                                             else if postcodeCheck
                                                  then class "input is-success"
@@ -204,8 +206,6 @@ view model =
             , if postcodeCheck
               then postcodeDetails model.postcode model.unfiltered
               else div [] []
-            , formField "Cases in last 'x' number of days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
-            , formField "Filter" (List.map formCheckbox <| Dict.toList model.sources)
             ]
         ]
 
@@ -229,10 +229,9 @@ minDate data = timeParse List.minimum data
 maxDate data = timeParse List.maximum data
 
 timeParse f data = List.map (\p -> p.infections
-                        |> Dict.keys |> List.reverse |> List.head
-                        |> Maybe.andThen (\v -> toTime v |> Result.toMaybe)
+                        |> Dict.keys |> List.map (\v -> Result.toMaybe <| toTime v)
                         ) data
-             |> List.filterMap (Maybe.map posixToMillis)
+             |> List.concat |> List.filterMap (Maybe.map posixToMillis)
              |> f |> Maybe.withDefault 0 |> millisToPosix
 
 showProp property = p [] [text property.postcode]
