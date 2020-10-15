@@ -8,6 +8,7 @@ import {OSM, TileWMS, Vector as VectorSource} from 'ol/source';
 import {Circle as CircleStyle, Fill, Stroke, Style, Text} from 'ol/style';
 import {createEmpty, getWidth, getHeight, extend} from 'ol/extent';
 
+var dateInit = Date.now();
 var dateSelect = new Date();
 var intervalId = null;
 var maxFeatureCount;
@@ -66,7 +67,7 @@ var vector = new VectorLayer({
     source: new Cluster({
 	source: new VectorSource({
 	    format: new GeoJSON(),
-	    url: './geo.json?' + Date.now()
+	    url: './geo.json?' + dateInit
 	}),
 	geometryFunction: function(feature) {
 	    if(sourceFilter[feature.get('postcode')] == 0) {
@@ -116,7 +117,7 @@ window.onload = function () {
 
 var app = Elm.Main.init({
     node: document.getElementById('elm-controls'),
-    flags: Date.now()
+    flags: dateInit
 });
 
 map.on('pointermove', function(e) {

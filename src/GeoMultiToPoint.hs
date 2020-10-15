@@ -32,12 +32,12 @@ postcodeGeoPoint = do
 
 makePoint :: GeoFeature Properties -> GeoFeature Properties
 makePoint (GeoFeature bb geo props fid) = GeoFeature bb newGeo props fid
-  where newGeo = let MultiPolygon (GeoMultiPolygon seqs) = geo
-                 in Point (GeoPoint $ remakePoint (average (makeList seqs)))
+  where newGeo = let MultiPolygon (GeoMultiPolygon sequences) = geo
+                 in Point (GeoPoint $ remakePoint (average (makeList sequences)))
 
 remakePoint (x,y) = GeoPointXY (PointXY x y)
 
-makeList seqs = concat . concat . map (map (toList . toSeq)) . map toList . toList $ seqs
+makeList sequences = concat . concat . map (map (toList . toSeq)) . map toList . toList $ sequences
 
 average xs = foldl geoAdd (0,0) xs `geodiv` fromIntegral (length xs)
 

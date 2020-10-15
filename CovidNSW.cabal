@@ -23,7 +23,6 @@ executable CovidNSW
                  GeoJson
                  Persist
                  Serve
-                 Data.Csv.Lens
   -- other-extensions:
   build-depends:       base
                      , time
@@ -39,5 +38,6 @@ executable CovidNSW
                      , http-types
                      , wreq
                      , validation
+                     , lens-csv
   hs-source-dirs:      src
   default-language:    Haskell2010

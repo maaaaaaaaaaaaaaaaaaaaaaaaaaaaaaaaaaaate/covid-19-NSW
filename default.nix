@@ -1,6 +1,6 @@
 { mkDerivation, aeson, base, bytestring, cassava, containers
-, geojson, http-types, lens, lens-aeson, stdenv, time, validation
-, wai, warp, wreq
+, geojson, http-types, lens, lens-aeson, lens-csv, stdenv, time
+, validation, wai, warp, wreq
 }:
 mkDerivation {
   pname = "CovidNSW";
@@ -10,7 +10,7 @@ mkDerivation {
   isExecutable = true;
   executableHaskellDepends = [
     aeson base bytestring cassava containers geojson http-types lens
-    lens-aeson time validation wai warp wreq
+    lens-aeson lens-csv time validation wai warp wreq
   ];
   homepage = "gnarly.dog";
   description = "Covid-19 NSW map";

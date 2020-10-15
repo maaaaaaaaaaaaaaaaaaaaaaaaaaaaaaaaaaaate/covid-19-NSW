@@ -26,7 +26,7 @@ main = Browser.element
     }
 
 type Msg = IncDate Int
-         | PlayTimeline
+         | StartTimeline
          | JsonResponse (Result Http.Error (List Properties))
          | CheckDate String
          | CheckPostcode String
@@ -47,7 +47,7 @@ type alias Model =
     , unfiltered : List Properties
     , postcode : String
     , dateVal : String
-    , isPlaying : Bool
+    , isTimer : Bool
     , hideControls : Bool
     }
 
@@ -58,7 +58,7 @@ init v =
           , maxDate = Time.millisToPosix 0}
         Nothing Dict.empty Dict.empty [] "" "" False False
   , Cmd.batch [ Http.get
-                   { url = "./geo.json?" ++ Sting.fromInt v
+                   { url = "./geo.json?" ++ String.fromInt v
                    , expect = Http.expectJson JsonResponse geoDecoder}
               ]
   )
@@ -88,19 +88,19 @@ update msg model =
                         ({ model
                              | dates = { dates | date = newDate }
                              , dateVal = String.left 10 (fromTime newDate)
-                             , isPlaying = if model.isPlaying && newDate == dates.maxDate
+                             , isTimer = if model.isTimer && newDate == dates.maxDate
                                            then False
-                                           else model.isPlaying }
+                                           else model.isTimer }
                              |> refilter
                         , Cmd.none)
         -- Toggle whether timeline is playing
-        PlayTimeline -> (if not model.isPlaying && model.dates.date == model.dates.maxDate
+        StartTimeline -> (if not model.isTimer && model.dates.date == model.dates.maxDate
                          then { model
-                                  | isPlaying = not model.isPlaying,
+                                  | isTimer = not model.isTimer,
                                     dates = { dates | date = millisToPosix <| posixToMillis model.dates.minDate +
                                                   (Maybe.withDefault 0 model.numDays)*86400000} }
                              |> refilter
-                         else { model | isPlaying = not model.isPlaying }
+                         else { model | isTimer = not model.isTimer }
                         , Cmd.none)
         -- Fetch GeoJson from file
         JsonResponse result ->
@@ -160,10 +160,10 @@ refilter model =
     in { model
            | filtered = newFilter }
 
--- Watch postcode from port and increment date if timeline is playing
+-- Watch postcode from port and increment date if timeline is running
 subscriptions : Model -> Sub Msg
-subscriptions model = if model.isPlaying
-                      then Sub.batch [subPostcode Hover, always (IncDate 1) |> Time.every 500]
+subscriptions model = if model.isTimer
+                      then Sub.batch [subPostcode Hover, always (IncDate 1) |> Time.every 1000]
                       else subPostcode Hover
 
 
@@ -190,9 +190,9 @@ view model =
                                                , value model.dateVal] []]
                 , div [class "control"] [button [class "button is-dark", onClick (IncDate 1)] [text "Next"]]
                 ]
-            , formField "Timeline" [if model.isPlaying
-                                    then playButton "Pause" "button is-warning"
-                                    else playButton "Start" "button is-success"]
+            , formField "Timeline" [if model.isTimer
+                                    then timerButton "Stop" "button is-warning"
+                                    else timerButton "Start" "button is-danger"]
             , formField "Cases in last 'x' number of days" [div [class "select"] [select [onInput UpdateDate] (manyOptions model.dates)]]
             , formField "Filter" (List.map formCheckbox <| Dict.toList model.sources)
             , formField "Postcode" [input [ if model.postcode == "" then class "input"
@@ -252,7 +252,7 @@ postcodeDetails postcode properties =
         Nothing -> div [] []
         Just prop -> div [class "box"] [showTests prop.tests <| infectionSum prop.infections, div [] (List.reverse <| Dict.values <| Dict.map datePrint prop.infections)]
 
-playButton name classes = button [class classes, onClick PlayTimeline] [text name]
+timerButton name classes = button [class classes, onClick StartTimeline] [text name]
 
 formField name htmls = div [class "field box"]
                        [ label [class "label"] [text name]

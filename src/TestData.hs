@@ -35,7 +35,7 @@ fetchTestData = do
 makeMap :: [CsvRow] -> M.Map String Int
 makeMap = foldl (\acc -> \csv ->
                     (M.unionWith (+))
-                    (M.singleton (case postcode csv of
+                    (M.singleton (take 4 $ case postcode csv of
                                     "" -> "0"
                                     _ -> postcode csv)
                     1)

@@ -36,7 +36,7 @@ fetchInfectionSource = do
 makeMap :: [CsvRow] -> M.Map String (M.Map String (M.Map String Int))
 makeMap = foldl (\acc -> \csv ->
                     (M.unionWith . M.unionWith  . M.unionWith $ (+))
-                    (M.singleton (case postcode csv of
+                    (M.singleton (take 4 $ case postcode csv of
                                     "" -> "0"
                                     _ -> postcode csv)
                       . M.singleton (notification_date csv) . M.singleton (likely_source_of_infection csv) $ 1)
