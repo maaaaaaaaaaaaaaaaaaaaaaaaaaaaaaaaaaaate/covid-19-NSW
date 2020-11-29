@@ -1,7 +1,7 @@
 port module Main exposing (main)
 
 -- Mapping Corona virus infections in NSW, Australia
--- Control Panel for open layers map
+-- Toolbox for open layers map with clustering features
 -- Thomas Paine, 2020
 
 import Browser
@@ -93,7 +93,7 @@ update msg model =
                                            else model.isTimer }
                              |> refilter
                         , Cmd.none)
-        -- Toggle whether timeline is playing
+        -- Toggle whether timeline is running
         StartTimeline -> (if not model.isTimer && model.dates.date == model.dates.maxDate
                          then { model
                                   | isTimer = not model.isTimer,
